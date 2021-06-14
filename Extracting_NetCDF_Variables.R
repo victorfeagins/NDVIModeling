@@ -20,26 +20,36 @@ NC_file <- nc_open(filename)
 
 ### Coordinate ----
 
-# Offset and factors found in print(NC_Test) having hard time extracting it out of the variable.
-print.output<- capture.output(NC_file)
+# Offset and factors found in print(NC_Test) Can't seem to find them using the object NC_file.
+#This code assumes that the last 2 pairs of offset and factors are y and x.
 
-y.scale_factor = print.output[grep("scale_factor",print.output)][2] %>% 
-  str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
-  as.numeric()
-
-x.scale_factor = print.output[grep("scale_factor",print.output)][3] %>% 
-  str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
-  as.numeric()
+print.output<- capture.output(NC_file) %>% 
+  str_subset("scale_factor|add_offset") #looking for scale factor or add_offset
+Lengthofprint=length(print.output)
 
 
-y.offset = print.output[grep("add_offset",print.output)][2] %>% 
-  str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
-  as.numeric()
+#### Y factor and offset ----
+y.scale_factor = print.output[Lengthofprint-3] %>% 
+    str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
+    as.numeric()
+y.offset = print.output[Lengthofprint-2] %>% 
+    str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
+    as.numeric()
 
-x.offset = print.output[grep("add_offset",print.output)][3] %>% 
-  str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
-  as.numeric()
+#### X factor and offset ----
+x.scale_factor = print.output[Lengthofprint-1] %>% 
+    str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
+    as.numeric()
+x.offset = print.output[Lengthofprint] %>% 
+    str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
+    as.numeric()
 
+
+#### Getting Longitude and Latiude
+#Are x and y in micro radians?
+(c(0:200)-y.offset)/y.scale_factor*1e-6
+
+(c(0:200)-x.offset)/x.scale_factor*1e-6
 
 nc_close(NC_file)
 ### Radiances ----
