@@ -90,7 +90,7 @@ sin.sq <- function(num){
 cos.sq <- function(num){
   (cos(num))^2
 }
-lambda.o = -1.308996939
+#lambda.o = -1.308996939 From manual value
 YX.to.coords <- function(y,x){
   
   a = sin.sq(y) %>% 
@@ -147,6 +147,53 @@ c(lat,long)
 }
 
 YX.to.coords(0.095340, -0.024052)
+
+coords.to.YX <- function(lat, long){
+  #Lat and long in GRS80
+  phi.c = lat %>%
+    tan() %>% 
+    multiply_by((r.pol/r.eq)^2) %>% 
+    atan()
+  
+  r.c = phi.c %>% 
+    cos.sq() %>% 
+    multiply_by(e.value^2) %>% 
+    multiply_by(-1) %>% 
+    add(1) %>% 
+    raise_to_power(-1/2) %>% 
+    multiply_by(r.pol)
+  
+  s.x = long %>% 
+    subtract(lambda.o) %>% 
+    cos() %>% 
+    multiply_by(cos(phi.c)) %>% 
+    multiply_by(-r.c) %>% 
+    add(H)
+  
+  s.y = long %>% 
+    subtract(lambda.o) %>% 
+    sin() %>% 
+    multiply_by(cos(phi.c)) %>% 
+    multiply_by(-r.c)
+  
+  s.z = phi.c %>% 
+    sin() %>% 
+    multiply_by(r.c)
+  
+  y = atan(s.z/s.x)
+  
+  x = s.x^2 %>% 
+    add(s.y^2) %>% 
+    add(s.z^2) %>% 
+    raise_to_power(-1/2) %>% 
+    multiply_by(-s.y) %>% 
+    asin()
+  
+  c(y,x)
+}
+
+coords.to.YX(0.590726966, -1.47813561)
+
 nc_close(NC_file)
 ### Radiances ----
 
