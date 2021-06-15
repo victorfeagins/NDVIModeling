@@ -142,6 +142,7 @@ File_info <- function(NC_file){
 }
 
 filename = "Data/OR_ABI-L1b-RadC-M3C02_G16_s20172330202189_e20172330204562_c20172330205000.nc"
+filename = "Data/OR_ABI-L1b-RadC-M3C03_G16_s20172330622189_e20172330624562_c20172330625004.nc"
 NC_file <- nc_open(filename)
 
 NC_info <- File_info(NC_file)
@@ -178,13 +179,13 @@ coords.to.index(testlat, testlong, NC_info)
 # Raw Data -----
 #nc.get.var.subset.by.axes This one seems to the most useful.
 
-Extract_Radiances <- function(lat, long, NC_file, NC_infolist){
+Extract_Radiances <- function(lat, long, NC_file, NC_infolist, Channel = c("2","3")){
   
   index <- coords.to.index(lat, long, NC_infolist)
   
-  Value <- nc.get.var.subset.by.axes(NC_file, "Rad", list(Y=index$y.index, X=index$x.index)) %>% 
-    multiply_by(NC_file$var$Rad$scaleFact) %>% 
-    add(NC_file$var$Rad$addOffset)
+  Value <- nc.get.var.subset.by.axes(NC_file, "Rad", list(Y=index$y.index, X=index$x.index))# %>% 
+   # multiply_by(NC_file$var$Rad$scaleFact) %>% 
+   # add(NC_file$var$Rad$addOffset)
   
   DataFlag <- nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=index$y.index, X=index$x.index))
   Kappa <-  ncvar_get(NC_file,"kappa0")
@@ -196,14 +197,22 @@ Extract_Radiances <- function(lat, long, NC_file, NC_infolist){
   
   Lat <- rad2deg(lat)
   Long <-  rad2deg(long)
+  Channel <- match.arg(Channel)
+
   
-  list(Latitude = Lat, Longitude = Long, Radiances = Value, Kappa = Kappa, Begin.Scan = Begin.Scan,End.Scan = End.Scan,
-       DataFlag = DataFlag)
+  if (Channel == "2"){
+    return(list(Latitude = Lat, Longitude = Long, RadiancesCH2 = Value, KappaCH2 = Kappa, Begin.ScanCH2 = Begin.Scan,End.ScanCH2 = End.Scan,
+         DataFlagCH2 = DataFlag))
+  }else if (Channel == "3"){
+    return(list(Latitude = Lat, Longitude = Long, RadiancesCH3 = Value, KappaCH3 = Kappa, Begin.ScanCH3 = Begin.Scan,End.ScanCH3 = End.Scan,
+                DataFlagCH3 = DataFlag))
+  }
+
 }
 
 Time_Bounds <-  ncvar_get(NC_file,"time_bounds")
 
-Extract_Radiances(testlat, testlong, NC_file, NC_info)
+
 
 testlatvector <- c(29.578100, 42.360081) %>% 
   deg2rad()
@@ -220,7 +229,10 @@ Extract_Radiances(testlatvector, testlongvector,NC_file, NC_info)
 
 test.dataframe <- data.frame(list(Lat=testlatvector, Long=testlongvector))
 
-test <- mapply(FUN = Extract_Radiances, testlatvector, testlongvector, MoreArgs= list(NC_file = NC_file, NC_infolist = NC_info)) %>% 
+test <- mapply(FUN = Extract_Radiances, testlatvector, testlongvector, MoreArgs= list(NC_file = NC_file, NC_infolist = NC_info, Channel = "2")) %>% 
   t() %>% 
   data.frame()
 test
+nc_close(NC_file)
+
+
