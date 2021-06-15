@@ -76,7 +76,7 @@ PPH <- print.output %>% #perspective point height
 
 H <-  PPH + r.eq
 
-lambda.o <- print.output %>% #perspective point height
+lambda.o <- print.output %>% 
   str_subset("longitude_of_projection_origin") %>% 
   str_extract(number_pattern) %>% 
   as.numeric() %>% #It is in degrees
