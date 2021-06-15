@@ -19,29 +19,29 @@ cos.sq <- function(num){
 }
 coords.to.YX <- function(lat, long, NC_infolist){
   #Lat and long in GRS80
-  attach(NC_infolist)
+
   phi.c = lat %>%
     tan() %>% 
-    multiply_by((r.pol/r.eq)^2) %>% 
+    multiply_by((NC_infolist$r.pol/NC_infolist$r.eq)^2) %>% 
     atan()
   
   r.c = phi.c %>% 
     cos.sq() %>% 
-    multiply_by(e.value^2) %>% 
+    multiply_by(NC_infolist$e.value^2) %>% 
     multiply_by(-1) %>% 
     add(1) %>% 
     raise_to_power(-1/2) %>% 
-    multiply_by(r.pol)
+    multiply_by(NC_infolist$r.pol)
   
   s.x = long %>% 
-    subtract(lambda.o) %>% 
+    subtract(NC_infolist$lambda.o) %>% 
     cos() %>% 
     multiply_by(cos(phi.c)) %>% 
     multiply_by(-r.c) %>% 
-    add(H)
+    add(NC_infolist$H)
   
   s.y = long %>% 
-    subtract(lambda.o) %>% 
+    subtract(NC_infolist$lambda.o) %>% 
     sin() %>% 
     multiply_by(cos(phi.c)) %>% 
     multiply_by(-r.c)
@@ -151,17 +151,18 @@ Coord.to.index <- function(lat,long, NC_infolist){
   
   RawCoord<- coords.to.YX(lat,long, NC_infolist)
   
-  y.index <- RawCoord$y.rad %>% 
-    multiply_by(NC_infolist$y.scale_factor) %>% 
-    add(NC_infolist$y.offset) %>% 
-    round()
+  # y.index <- RawCoord$y.rad %>% 
+  #   multiply_by(NC_infolist$y.scale_factor) %>% 
+  #   add(NC_infolist$y.offset) %>% 
+  #   round()
+  # 
+  # x.index <- RawCoord$x.rad %>% 
+  #   multiply_by(NC_infolist$x.scale_factor) %>% 
+  #   add(NC_infolist$x.offset) %>% 
+  #   round()
   
-  x.index <- RawCoord$x.rad %>% 
-    multiply_by(NC_infolist$x.scale_factor) %>% 
-    add(NC_infolist$x.offset) %>% 
-    round()
-  
-  list(y.index = y.index, x.index = x.index)
+  #list(y.index = y.index, x.index = x.index)
+  RawCoord
 }
 
 testlat = deg2rad(29.425171)
