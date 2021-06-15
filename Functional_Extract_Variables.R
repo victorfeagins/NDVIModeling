@@ -224,6 +224,7 @@ coords.to.angle(testlatvector, testlongvector, NC_info) #coords.to.angle works
 
 coords.to.index(testlatvector, testlongvector, NC_info)
 
+Extract_Radiances(testlat, testlong,NC_file, NC_info) 
 
 Extract_Radiances(testlatvector, testlongvector,NC_file, NC_info)
 
@@ -240,6 +241,29 @@ Create_Radiances_Dataframe <- function(lat, long, NC_file, NC_infolist, Channel 
     t() %>% 
     data.frame()
 }
+
+
+#### Temporally Extract the variables
+
+DataDirectory = "Data/"
+
+files = list.files(path=DataDirectory, full.names = TRUE, recursive=FALSE)
+
+Channel2files <- str_subset(files, "L1b-RadC-M3C02_G16")
+
+Channel3files <- str_subset(files, "L1b-RadC-M3C03_G16")
+
+NamePending <- function(file, lat, long, Channel = c("2", "3")){
+ Channel = match.arg(Channel)
+ NC_file <- nc_open(file)
+ NC_info <- File_info(NC_file)
+ FileRow<- Extract_Radiances(lat,long,NC_file,NC_info, Channel) %>% 
+   data.frame()
+ nc_close(NC_file)
+ return(FileRow)
+}
+
+NamePending(Channel2files, testlat,testlong,Channel = "2") # It works
 
 
 nc_close(NC_file)
