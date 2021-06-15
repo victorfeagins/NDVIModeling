@@ -17,7 +17,7 @@ sin.sq <- function(num){
 cos.sq <- function(num){
   (cos(num))^2
 }
-coords.to.YX <- function(lat, long, NC_infolist){
+coords.to.angle <- function(lat, long, NC_infolist){
   #Lat and long in GRS80
 
   phi.c = lat %>%
@@ -146,8 +146,8 @@ NC_file <- nc_open(filename)
 
 NC_info <- File_info(NC_file)
 
-Coord.to.index <- function(lat,long, NC_infolist){
-  #Coords have to be in GRS80
+coords.to.index <- function(lat,long, NC_infolist){
+  #Coords have to be in GRS80 and in radians
   
   RawCoord<- coords.to.YX(lat,long, NC_infolist)
 
@@ -166,11 +166,11 @@ x.index <- RawCoord$x.rad %>%
 
 
 
-testlat = deg2rad(29.425171)
-testlong = deg2rad(-98.494614)
-
-coords.to.YX(testlat, testlong, NC_info) # My functions works
-
-
-Coord.to.index(testlat, testlong, NC_info)
+# testlat = deg2rad(29.425171)
+# testlong = deg2rad(-98.494614)
+# 
+# coords.to.angle(testlat, testlong, NC_info) # My functions works
+# 
+# 
+# coords.to.index(testlat, testlong, NC_info)
 
