@@ -7,6 +7,7 @@
 library(ncdf4)
 library(ncdf4.helpers)
 library(stringr)
+library(magrittr)
 
 ## File ----
 
@@ -20,6 +21,7 @@ ls.str(NC_file$var$Rad)
 #Many important variables are not contained in the NC_File object but only appear when doing print
 
 print.output<- capture.output(NC_file) #Saves the output of print(NC_file)
+number_pattern <- "-?[\\d]+.?[\\d]*e?-?[\\d]+" #regex expression for grabbing numbers
 ### Coordinate ----
 
 # Offset and factors found in print(NC_Test) Can't seem to find them using the object NC_file.
@@ -33,50 +35,62 @@ LengthFactor_Offset=length(Factor_Offset)
 
 #### Y factor and offset ----
 y.scale_factor = Factor_Offset[LengthFactor_Offset-3] %>% 
-    str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
+    str_extract(number_pattern) %>% 
     as.numeric()
 y.offset = Factor_Offset[LengthFactor_Offset-2] %>% 
-    str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
+    str_extract(number_pattern) %>% 
     as.numeric()
 
 #### X factor and offset ----
 x.scale_factor = Factor_Offset[LengthFactor_Offset-1] %>% 
-    str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
+    str_extract(number_pattern) %>% 
     as.numeric()
 x.offset = Factor_Offset[LengthFactor_Offset] %>% 
-    str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
+    str_extract(number_pattern) %>% 
     as.numeric()
 
 
 #### Getting Longitude and Latiude
 #Follow the equations in Volume 3: Level1b products section 5.1.2.8
 #Strange_Num <- ncvar_get(NC_file, "goes_imager_projection")
+
 r.eq <- print.output %>% 
   str_subset("semi_major_axis") %>% 
-  str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
+  str_extract(number_pattern) %>% 
   as.numeric()
 
 r.pol <- print.output %>% 
   str_subset("semi_minor_axis") %>% 
-  str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
+  str_extract(number_pattern) %>% 
   as.numeric()
 
 e.value <- sqrt((r.eq^2-r.pol^2)/r.eq^2)
 
 PPH <- print.output %>% #perspective point height
   str_subset("perspective_point_height") %>% 
-  str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
+  str_extract(number_pattern) %>% 
   as.numeric()
 
 H <-  PPH + r.eq
 
 lambda.o <- print.output %>% #perspective point height
-  str_subset("longitude_of_projection_origin") #%>% 
-  str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
-  #as.numeric()
+  str_subset("longitude_of_projection_origin") %>% 
+  str_extract(number_pattern) %>% 
+  as.numeric()
+
+
+sin.sq <- function(num){
+  (sin(num))^2
+}
+cos.sq <- function(num){
+  (cos(num))^2
+}
 
 XY.to.coords <- function(x,y){
-  a = sin
+  a = sin.sq(x) + cos.sq(x)*(cos.sq(y)+(((r.eq/r.pol)^2)*sin.sq(y)))
+  b = -2*H*cos(x)*cos(y)
+  c = H^2 - r.eq^2
+  
 }
 
 
