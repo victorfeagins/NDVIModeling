@@ -186,23 +186,41 @@ Extract_Radiances <- function(lat, long, NC_file, NC_infolist){
     multiply_by(NC_file$var$Rad$scaleFact) %>% 
     add(NC_file$var$Rad$addOffset)
   
+  DataFlag <- nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=index$y.index, X=index$x.index))
   Kappa <-  ncvar_get(NC_file,"kappa0")
   
   Time <-  ncvar_get(NC_file,"time_bounds") %>% 
     as.POSIXct(origin = "2000-01-01 12:00:00", tz = "UTC")
+  Begin.Scan <- Time[1]
+  End.Scan <-  Time[2]
   
   Lat <- rad2deg(lat)
   Long <-  rad2deg(long)
   
-  list(Radiances = Value, Kappa = Kappa, Time = Time)
+  list(Latitude = Lat, Longitude = Long, Radiances = Value, Kappa = Kappa, Begin.Scan = Begin.Scan,End.Scan = End.Scan,
+       DataFlag = DataFlag)
 }
 
 Time_Bounds <-  ncvar_get(NC_file,"time_bounds")
 
 Extract_Radiances(testlat, testlong, NC_file, NC_info)
 
-testlatvector <- c(29.578100, 42.360081)
+testlatvector <- c(29.578100, 42.360081) %>% 
+  deg2rad()
 
-testlongvector <- c(-98.590080, -71.058884)
+testlongvector <- c(-98.590080, -71.058884) %>% 
+  deg2rad()
 
 coords.to.angle(testlatvector, testlongvector, NC_info) #coords.to.angle works
+
+coords.to.index(testlatvector, testlongvector, NC_info)
+
+
+Extract_Radiances(testlatvector, testlongvector,NC_file, NC_info)
+
+test.dataframe <- data.frame(list(Lat=testlatvector, Long=testlongvector))
+
+test <- mapply(FUN = Extract_Radiances, testlatvector, testlongvector, MoreArgs= list(NC_file = NC_file, NC_infolist = NC_info)) %>% 
+  t() %>% 
+  data.frame()
+test
