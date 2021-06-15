@@ -233,6 +233,13 @@ test <- mapply(FUN = Extract_Radiances, testlatvector, testlongvector, MoreArgs=
   t() %>% 
   data.frame()
 test
+
+
+Create_Radiances_Dataframe <- function(lat, long, NC_file, NC_infolist, Channel = c("2","3")){
+  mapply(FUN = Extract_Radiances, lat, long, MoreArgs= list(NC_file = NC_file, NC_infolist = NC_infolist, Channel = Channel)) %>% 
+    t() %>% 
+    data.frame()
+}
+
+
 nc_close(NC_file)
-
-
