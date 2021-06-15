@@ -51,7 +51,33 @@ x.offset = Factor_Offset[LengthFactor_Offset] %>%
 #### Getting Longitude and Latiude
 #Follow the equations in Volume 3: Level1b products section 5.1.2.8
 #Strange_Num <- ncvar_get(NC_file, "goes_imager_projection")
+r.eq <- print.output %>% 
+  str_subset("semi_major_axis") %>% 
+  str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
+  as.numeric()
 
+r.pol <- print.output %>% 
+  str_subset("semi_minor_axis") %>% 
+  str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
+  as.numeric()
+
+e.value <- sqrt((r.eq^2-r.pol^2)/r.eq^2)
+
+PPH <- print.output %>% #perspective point height
+  str_subset("perspective_point_height") %>% 
+  str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
+  as.numeric()
+
+H <-  PPH + r.eq
+
+lambda.o <- print.output %>% #perspective point height
+  str_subset("longitude_of_projection_origin") #%>% 
+  str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
+  #as.numeric()
+
+XY.to.coords <- function(x,y){
+  a = sin
+}
 
 
 nc_close(NC_file)
