@@ -54,6 +54,9 @@ x.offset = Factor_Offset[LengthFactor_Offset] %>%
 #Follow the equations in Volume 3: Level1b products section 5.1.2.8
 #Strange_Num <- ncvar_get(NC_file, "goes_imager_projection")
 
+rad2deg <- function(rad) {(rad * 180) / (pi)}
+deg2rad <- function(deg) {(deg * pi) / (180)}
+
 r.eq <- print.output %>% 
   str_subset("semi_major_axis") %>% 
   str_extract(number_pattern) %>% 
@@ -76,7 +79,9 @@ H <-  PPH + r.eq
 lambda.o <- print.output %>% #perspective point height
   str_subset("longitude_of_projection_origin") %>% 
   str_extract(number_pattern) %>% 
-  as.numeric()
+  as.numeric() %>% #It is in degrees
+  deg2rad()
+  
 
 
 sin.sq <- function(num){
@@ -85,17 +90,63 @@ sin.sq <- function(num){
 cos.sq <- function(num){
   (cos(num))^2
 }
-
-XY.to.coords <- function(x,y){
+lambda.o = -1.308996939
+YX.to.coords <- function(y,x){
+  
   a = sin.sq(y) %>% 
     multiply_by((r.eq/r.pol)^2) %>% 
     add(cos.sq(y)) %>% 
     multiply_by(cos.sq(x)) %>% 
     add(sin.sq(x))
-
+  
+  b = H %>% 
+    multiply_by(-2) %>% 
+    multiply_by(cos(x)) %>% 
+    multiply_by(cos(y))
+  
+  c = H %>% 
+    raise_to_power(2) %>% 
+    subtract(r.eq^2)
+  
+  r.s = b^2 %>% 
+    subtract(4*a*c) %>% 
+    raise_to_power(1/2) %>% 
+    multiply_by(-1) %>% 
+    subtract(b) %>% 
+    divide_by(2*a)
+  
+  s.x = r.s %>% 
+    multiply_by(cos(x)) %>% 
+    multiply_by(cos(y))
+  
+  s.y = -r.s %>% 
+    multiply_by(sin(x))
+  
+  s.z = r.s %>% 
+    multiply_by(cos(x)) %>% 
+    multiply_by(sin(y))
+  
+  lat = H %>% 
+    subtract(s.x) %>% 
+    raise_to_power(2) %>% 
+    add(s.y^2) %>% 
+    raise_to_power(-1/2) %>% 
+    multiply_by(s.z) %>% 
+    multiply_by((r.eq/r.pol)^2) %>% 
+    atan()
+  
+  long = H %>% 
+    subtract(s.x) %>% 
+    raise_to_power(-1) %>% 
+    multiply_by(s.y) %>% 
+    atan() %>% 
+    multiply_by(-1) %>% 
+    add(lambda.o)
+  
+c(lat,long)
 }
 
-
+YX.to.coords(0.095340, -0.024052)
 nc_close(NC_file)
 ### Radiances ----
 
