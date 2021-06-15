@@ -87,10 +87,12 @@ cos.sq <- function(num){
 }
 
 XY.to.coords <- function(x,y){
-  a = sin.sq(x) + cos.sq(x)*(cos.sq(y)+(((r.eq/r.pol)^2)*sin.sq(y)))
-  b = -2*H*cos(x)*cos(y)
-  c = H^2 - r.eq^2
-  
+  a = sin.sq(y) %>% 
+    multiply_by((r.eq/r.pol)^2) %>% 
+    add(cos.sq(y)) %>% 
+    multiply_by(cos.sq(x)) %>% 
+    add(sin.sq(x))
+
 }
 
 
