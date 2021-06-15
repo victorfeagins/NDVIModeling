@@ -150,24 +150,25 @@ Coord.to.index <- function(lat,long, NC_infolist){
   #Coords have to be in GRS80
   
   RawCoord<- coords.to.YX(lat,long, NC_infolist)
-  
-  # y.index <- RawCoord$y.rad %>% 
-  #   multiply_by(NC_infolist$y.scale_factor) %>% 
-  #   add(NC_infolist$y.offset) %>% 
-  #   round()
-  # 
-  # x.index <- RawCoord$x.rad %>% 
-  #   multiply_by(NC_infolist$x.scale_factor) %>% 
-  #   add(NC_infolist$x.offset) %>% 
-  #   round()
-  
-  #list(y.index = y.index, x.index = x.index)
-  RawCoord
+
+y.index <- RawCoord$y.rad %>%
+  multiply_by(NC_infolist$y.scale_factor) %>%
+  add(NC_infolist$y.offset) %>%
+  multiply_by(1e+6) %>% 
+  round()
+
+x.index <- RawCoord$x.rad %>%
+  multiply_by(NC_infolist$x.scale_factor) %>%
+  add(NC_infolist$x.offset) %>%
+  multiply_by(1e+6) %>% 
+  round()
+
+  list(y.index = y.index, x.index = x.index)
 }
 
 testlat = deg2rad(29.425171)
 testlong = deg2rad(-98.494614)
 
 coords.to.YX(0.590726966, -1.47813561, NC_info)
-Coord.to.index(0.590726966, -1.47813561, NC_info)
+Coord.to.index(testlat, testlong, NC_info)
 
