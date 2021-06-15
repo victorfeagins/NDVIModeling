@@ -15,41 +15,44 @@ filename = "Data/OR_ABI-L1b-RadC-M3C02_G16_s20172330202189_e20172330204562_c2017
 #filename = "Data/OR_ABI-L1b-RadC-M3C03_G16_s20172330312189_e20172330314562_c20172330315004.nc"
 #filename = "Data/OR_ABI-L2-ACMC-M4_G16_s20172330110227_e20172330110227_c20172330116257.nc"
 NC_file <- nc_open(filename)
-
+ls.str(NC_file$var$Rad)
 ## Variables Extraction ----
+#Many important variables are not contained in the NC_File object but only appear when doing print
 
+print.output<- capture.output(NC_file) #Saves the output of print(NC_file)
 ### Coordinate ----
 
 # Offset and factors found in print(NC_Test) Can't seem to find them using the object NC_file.
 #This code assumes that the last 2 pairs of offset and factors are y and x.
 
-print.output<- capture.output(NC_file) %>% 
+
+Factor_Offset<- print.output %>% 
   str_subset("scale_factor|add_offset") #looking for scale factor or add_offset
-Lengthofprint=length(print.output)
+LengthFactor_Offset=length(Factor_Offset)
 
 
 #### Y factor and offset ----
-y.scale_factor = print.output[Lengthofprint-3] %>% 
+y.scale_factor = Factor_Offset[LengthFactor_Offset-3] %>% 
     str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
     as.numeric()
-y.offset = print.output[Lengthofprint-2] %>% 
+y.offset = Factor_Offset[LengthFactor_Offset-2] %>% 
     str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
     as.numeric()
 
 #### X factor and offset ----
-x.scale_factor = print.output[Lengthofprint-1] %>% 
+x.scale_factor = Factor_Offset[LengthFactor_Offset-1] %>% 
     str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
     as.numeric()
-x.offset = print.output[Lengthofprint] %>% 
+x.offset = Factor_Offset[LengthFactor_Offset] %>% 
     str_extract("-?[\\d]+.?[\\d]+e?-?[\\d]+") %>% 
     as.numeric()
 
 
 #### Getting Longitude and Latiude
-#Are x and y in micro radians?
-(c(0:200)-y.offset)/y.scale_factor*1e-6
+#Follow the equations in Volume 3: Level1b products section 5.1.2.8
+#Strange_Num <- ncvar_get(NC_file, "goes_imager_projection")
 
-(c(0:200)-x.offset)/x.scale_factor*1e-6
+
 
 nc_close(NC_file)
 ### Radiances ----
