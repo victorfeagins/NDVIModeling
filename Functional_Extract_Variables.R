@@ -149,7 +149,7 @@ NC_info <- File_info(NC_file)
 coords.to.index <- function(lat,long, NC_infolist){
   #Coords have to be in GRS80 and in radians
   
-  RawCoord<- coords.to.YX(lat,long, NC_infolist)
+  RawCoord<- coords.to.angle(lat,long, NC_infolist)
 
 y.index <- RawCoord$y.rad %>%
   subtract(NC_infolist$y.offset) %>% 
@@ -166,11 +166,43 @@ x.index <- RawCoord$x.rad %>%
 
 
 
-# testlat = deg2rad(29.425171)
-# testlong = deg2rad(-98.494614)
-# 
-# coords.to.angle(testlat, testlong, NC_info) # My functions works
-# 
-# 
-# coords.to.index(testlat, testlong, NC_info)
+testlat = deg2rad(29.425171)
+testlong = deg2rad(-98.494614)
 
+test <- coords.to.angle(testlat, testlong, NC_info) # My functions works
+
+
+coords.to.index(testlat, testlong, NC_info)
+
+
+# Raw Data -----
+#nc.get.var.subset.by.axes This one seems to the most useful.
+
+Extract_Radiances <- function(lat, long, NC_file, NC_infolist){
+  
+  index <- coords.to.index(lat, long, NC_infolist)
+  
+  Value <- nc.get.var.subset.by.axes(NC_file, "Rad", list(Y=index$y.index, X=index$x.index)) %>% 
+    multiply_by(NC_file$var$Rad$scaleFact) %>% 
+    add(NC_file$var$Rad$addOffset)
+  
+  Kappa <-  ncvar_get(NC_file,"kappa0")
+  
+  Time <-  ncvar_get(NC_file,"time_bounds") %>% 
+    as.POSIXct(origin = "2000-01-01 12:00:00", tz = "UTC")
+  
+  Lat <- rad2deg(lat)
+  Long <-  rad2deg(long)
+  
+  list(Radiances = Value, Kappa = Kappa, Time = Time)
+}
+
+Time_Bounds <-  ncvar_get(NC_file,"time_bounds")
+
+Extract_Radiances(testlat, testlong, NC_file, NC_info)
+
+testlatvector <- c(29.578100, 42.360081)
+
+testlongvector <- c(-98.590080, -71.058884)
+
+coords.to.angle(testlatvector, testlongvector, NC_info) #coords.to.angle works
