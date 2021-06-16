@@ -184,17 +184,39 @@ coords.to.index(testlat, testlong, NC_info)
 # Raw Data -----
 #nc.get.var.subset.by.axes This one seems to the most useful.
 
-Extract_Radiances <- function(lat, long, NC_file, NC_infolist, Channel = c("2","3")){
+Extract_Variable <- function(lat, long, NC_file, NC_infolist){
   #Telling the Channel will rename the variables in the output.
   
   index <- coords.to.index(lat, long, NC_infolist) #Grabs The index 
   
-  Value <- nc.get.var.subset.by.axes(NC_file, "Rad", list(Y=index$y.index, X=index$x.index)) %>% 
-    multiply_by(NC_file$var$Rad$scaleFact) %>% 
-    add(NC_file$var$Rad$addOffset)
+  filename <-  NC_file$filename 
+  
+  if(str_detect(filename, "OR_ABI-L2-ACMC-M3")){
+    Varname <-  "BCM"
+    Outputname <-  "BCM"
+  } else if (str_detect(filename, "L1b-RadC-M3C02_G16")){
+    Varname <- "Rad"
+    Outputname <- "RadC02" 
+    
+  } else if (str_detect(filename, "L1b-RadC-M3C03_G16")){
+    Varname <- "Rad"
+    Outputname <- "RadC03"
+  }
+  
+  if (NC_file$var[[Varname]]$hasScaleFact){
+    Value <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index, X=index$x.index)) %>% 
+      multiply_by(NC_file$var[[Varname]]$scaleFact) %>% 
+      add(NC_file$var[[Varname]]$addOffset)
+  } else {
+    Value <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index, X=index$x.index))
+  }
+
   
   DataFlag <- nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=index$y.index, X=index$x.index))
-  Kappa <-  ncvar_get(NC_file,"kappa0")
+  if (Varname == "Rad"){
+    Kappa <-  ncvar_get(NC_file,"kappa0")
+  }
+  
   
   Time <-  ncvar_get(NC_file,"time_bounds") %>% 
     as.POSIXct(origin = "2000-01-01 12:00:00", tz = "UTC") %>% 
@@ -206,44 +228,31 @@ Extract_Radiances <- function(lat, long, NC_file, NC_infolist, Channel = c("2","
     round(5)
   Long <-  rad2deg(long) %>% 
     round(5)
-  Channel <- match.arg(Channel)
 
   
-  if (Channel == "2"){
-    return(list(Latitude = Lat, Longitude = Long, RadiancesCH2 = Value, KappaCH2 = Kappa, Begin.ScanCH2 = Begin.Scan,End.ScanCH2 = End.Scan,
-         DataFlagCH2 = DataFlag))
-  }else if (Channel == "3"){
-    return(list(Latitude = Lat, Longitude = Long, RadiancesCH3 = Value, KappaCH3 = Kappa, Begin.ScanCH3 = Begin.Scan,End.ScanCH3 = End.Scan,
-                DataFlagCH3 = DataFlag))
-  }
-
+  if (Outputname == "RadC02"){
+    #Going to include Kappa
+    return(list(Latitude = Lat, Longitude = Long, 
+                RadC02 = Value, KappaC02 = Kappa, 
+                Begin.Scan = Begin.Scan,End.Scan = End.Scan,
+                RadC02DQF = DataFlag))
+  } else if (Outputname == "RadC03"){
+    return(list(Latitude = Lat, Longitude = Long, 
+                RadC03 = Value, KappaC03 = Kappa, 
+                Begin.Scan = Begin.Scan,End.Scan = End.Scan,
+                RadC03DQF = DataFlag))
+    
+  } else if(Outputname == "BCM"){
+    return(list(Latitude = Lat, Longitude = Long, 
+                BCM = Value,
+                Begin.Scan = Begin.Scan, End.Scan = End.Scan,
+                BCMDQF = DataFlag))}
 }
 
 Time_Bounds <-  ncvar_get(NC_file,"time_bounds")
 
 
-
-testlatvector <- c(29.578100, 42.360081) %>% 
-  deg2rad()
-
-testlongvector <- c(-98.590080, -71.058884) %>% 
-  deg2rad()
-
-coords.to.angle(testlatvector, testlongvector, NC_info) #coords.to.angle works
-
-coords.to.index(testlatvector, testlongvector, NC_info)
-
-Extract_Radiances(testlat, testlong,NC_file, NC_info) 
-
-Extract_Radiances(testlatvector, testlongvector,NC_file, NC_info)
-
-test.dataframe <- data.frame(list(Lat=testlatvector, Long=testlongvector))
-
-test <- mapply(FUN = Extract_Radiances, testlatvector, testlongvector, MoreArgs= list(NC_file = NC_file, NC_infolist = NC_info, Channel = "2")) %>% 
-  t() %>% 
-  data.frame()
-test
-
+Extract_Variable(testlat, testlong,NC_file, NC_info) 
 
 
 
@@ -258,41 +267,40 @@ Channel2files <- str_subset(files, "L1b-RadC-M3C02_G16")
 
 Channel3files <- str_subset(files, "L1b-RadC-M3C03_G16")
 
-NamePending <- function(file, lat, long, Channel = c("2", "3")){
- Channel = match.arg(Channel)
+CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC-M3_G16")
+
+NamePending <- function(file, lat, long){
  NC_file <- nc_open(file)
  NC_info <- File_info(NC_file)
- FileRow<- Extract_Radiances(lat,long,NC_file,NC_info, Channel) %>% 
+ FileRow<- Extract_Variable(lat,long,NC_file,NC_info) %>% 
    data.frame()
  nc_close(NC_file)
  return(FileRow)
 }
 
-NamePending(Channel2files, testlat,testlong,Channel = "2") # It works
+NamePending(CloudMask[1], testlat,testlong)
 
 ptm <- proc.time()
-DataCh2<- map_dfr(Channel2files, NamePending, lat = testlat, long = testlong, Channel = "2")
+DataCh2<- map_dfr(Channel2files, NamePending, lat = testlat, long = testlong)
 
-DataCh3<- map_dfr(Channel3files, NamePending, lat = testlat, long = testlong, Channel = "3")
+DataCh3<- map_dfr(Channel3files, NamePending, lat = testlat, long = testlong)
+
+DataCloud<- map_dfr(CloudMask, NamePending, lat = testlat, long = testlong)
+
 proc.time() - ptm
 
 
-#test<- merge(DataCh2,DataCh3, by.x = c("Begin.ScanCH2", "Latitude", "Longitude"), by.y = c("Begin.ScanCH3","Latitude", "Longitude"))
+test<- merge(DataCh2,DataCh3, by = c("Begin.Scan", "Latitude", "Longitude"), all = TRUE) %>% 
+  merge(DataCloud, by = c("Begin.Scan", "Latitude", "Longitude"),all = TRUE)
 
 
 plan(multisession)
 
 ptm <- proc.time()
-Futured1<- future_map_dfr(Channel2files, NamePending, lat = testlat, long = testlong, Channel = "2")
+Futured1<- future_map_dfr(Channel2files, NamePending, lat = testlat, long = testlong)
 
-Futured2<- future_map_dfr(Channel3files, NamePending, lat = testlat, long = testlong, Channel = "3")
+Futured2<- future_map_dfr(Channel3files, NamePending, lat = testlat, long = testlong)
 proc.time() - ptm
 
 
-#### Cloud Data ----
-file = "Data/OR_ABI-L2-ACMC-M3_G16_s20172330202189_e20172330204562_c20172330205137.nc"
-Cloud <- nc_open(file)
 
-Cloud_info<- File_info(Cloud)
-attributes(Cloud)
-attributes(Cloud$var)
