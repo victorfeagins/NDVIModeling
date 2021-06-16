@@ -294,4 +294,5 @@ file = "Data/OR_ABI-L2-ACMC-M3_G16_s20172330202189_e20172330204562_c201723302051
 Cloud <- nc_open(file)
 
 Cloud_info<- File_info(Cloud)
-
+attributes(Cloud)
+attributes(Cloud$var)
