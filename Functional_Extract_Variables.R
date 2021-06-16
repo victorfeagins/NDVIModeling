@@ -7,6 +7,7 @@ library(ncdf4)
 library(ncdf4.helpers)
 library(stringr)
 library(magrittr)
+library(dplyr)
 ## Utility functions ----
 rad2deg <- function(rad) {(rad * 180) / (pi)}
 deg2rad <- function(deg) {(deg * pi) / (180)}
@@ -183,20 +184,23 @@ Extract_Radiances <- function(lat, long, NC_file, NC_infolist, Channel = c("2","
   
   index <- coords.to.index(lat, long, NC_infolist)
   
-  Value <- nc.get.var.subset.by.axes(NC_file, "Rad", list(Y=index$y.index, X=index$x.index))# %>% 
-   # multiply_by(NC_file$var$Rad$scaleFact) %>% 
-   # add(NC_file$var$Rad$addOffset)
+  Value <- nc.get.var.subset.by.axes(NC_file, "Rad", list(Y=index$y.index, X=index$x.index)) %>% 
+    multiply_by(NC_file$var$Rad$scaleFact) %>% 
+    add(NC_file$var$Rad$addOffset)
   
   DataFlag <- nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=index$y.index, X=index$x.index))
   Kappa <-  ncvar_get(NC_file,"kappa0")
   
   Time <-  ncvar_get(NC_file,"time_bounds") %>% 
-    as.POSIXct(origin = "2000-01-01 12:00:00", tz = "UTC")
+    as.POSIXct(origin = "2000-01-01 12:00:00", tz = "UTC") %>% 
+    round.POSIXt("secs")
   Begin.Scan <- Time[1]
   End.Scan <-  Time[2]
   
-  Lat <- rad2deg(lat)
-  Long <-  rad2deg(long)
+  Lat <- rad2deg(lat) %>% 
+    round(5)
+  Long <-  rad2deg(long) %>% 
+    round(5)
   Channel <- match.arg(Channel)
 
   
@@ -236,11 +240,7 @@ test <- mapply(FUN = Extract_Radiances, testlatvector, testlongvector, MoreArgs=
 test
 
 
-Create_Radiances_Dataframe <- function(lat, long, NC_file, NC_infolist, Channel = c("2","3")){
-  mapply(FUN = Extract_Radiances, lat, long, MoreArgs= list(NC_file = NC_file, NC_infolist = NC_infolist, Channel = Channel)) %>% 
-    t() %>% 
-    data.frame()
-}
+
 
 
 #### Temporally Extract the variables
@@ -265,5 +265,15 @@ NamePending <- function(file, lat, long, Channel = c("2", "3")){
 
 NamePending(Channel2files, testlat,testlong,Channel = "2") # It works
 
+ptm <- proc.time()
+DataCh2<- purrr::map_dfr(Channel2files, NamePending, lat = testlat, long = testlong, Channel = "2")
 
-nc_close(NC_file)
+DataCh3<- purrr::map_dfr(Channel3files, NamePending, lat = testlat, long = testlong, Channel = "3")
+proc.time() - ptm
+
+
+test<- merge(DataCh2,DataCh3, by.x = c("Begin.ScanCH2", "Latitude", "Longitude"), by.y = c("Begin.ScanCH3","Latitude", "Longitude"))
+head(test)
+
+
+
