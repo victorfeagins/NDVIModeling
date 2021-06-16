@@ -8,6 +8,7 @@ library(ncdf4.helpers)
 library(stringr)
 library(magrittr)
 library(dplyr)
+library(purrr)
 ## Utility functions ----
 rad2deg <- function(rad) {(rad * 180) / (pi)}
 deg2rad <- function(deg) {(deg * pi) / (180)}
@@ -266,14 +267,22 @@ NamePending <- function(file, lat, long, Channel = c("2", "3")){
 NamePending(Channel2files, testlat,testlong,Channel = "2") # It works
 
 ptm <- proc.time()
-DataCh2<- purrr::map_dfr(Channel2files, NamePending, lat = testlat, long = testlong, Channel = "2")
+DataCh2<- map_dfr(Channel2files, NamePending, lat = testlat, long = testlong, Channel = "2")
 
-DataCh3<- purrr::map_dfr(Channel3files, NamePending, lat = testlat, long = testlong, Channel = "3")
+DataCh3<- map_dfr(Channel3files, NamePending, lat = testlat, long = testlong, Channel = "3")
 proc.time() - ptm
 
 
-test<- merge(DataCh2,DataCh3, by.x = c("Begin.ScanCH2", "Latitude", "Longitude"), by.y = c("Begin.ScanCH3","Latitude", "Longitude"))
-head(test)
+#test<- merge(DataCh2,DataCh3, by.x = c("Begin.ScanCH2", "Latitude", "Longitude"), by.y = c("Begin.ScanCH3","Latitude", "Longitude"))
 
 
+library(furrr)
+library(future)
+plan(multisession)
+
+ptm <- proc.time()
+Futured1<- future_map_dfr(Channel2files, NamePending, lat = testlat, long = testlong, Channel = "2")
+
+Futured2<- future_map_dfr(Channel3files, NamePending, lat = testlat, long = testlong, Channel = "3")
+proc.time() - ptm
 
