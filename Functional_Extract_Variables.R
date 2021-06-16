@@ -9,6 +9,9 @@ library(stringr)
 library(magrittr)
 library(dplyr)
 library(purrr)
+
+library(future)
+library(furrr)
 ## Utility functions ----
 rad2deg <- function(rad) {(rad * 180) / (pi)}
 deg2rad <- function(deg) {(deg * pi) / (180)}
@@ -182,8 +185,9 @@ coords.to.index(testlat, testlong, NC_info)
 #nc.get.var.subset.by.axes This one seems to the most useful.
 
 Extract_Radiances <- function(lat, long, NC_file, NC_infolist, Channel = c("2","3")){
+  #Telling the Channel will rename the variables in the output.
   
-  index <- coords.to.index(lat, long, NC_infolist)
+  index <- coords.to.index(lat, long, NC_infolist) #Grabs The index 
   
   Value <- nc.get.var.subset.by.axes(NC_file, "Rad", list(Y=index$y.index, X=index$x.index)) %>% 
     multiply_by(NC_file$var$Rad$scaleFact) %>% 
@@ -276,8 +280,6 @@ proc.time() - ptm
 #test<- merge(DataCh2,DataCh3, by.x = c("Begin.ScanCH2", "Latitude", "Longitude"), by.y = c("Begin.ScanCH3","Latitude", "Longitude"))
 
 
-library(furrr)
-library(future)
 plan(multisession)
 
 ptm <- proc.time()
@@ -285,4 +287,11 @@ Futured1<- future_map_dfr(Channel2files, NamePending, lat = testlat, long = test
 
 Futured2<- future_map_dfr(Channel3files, NamePending, lat = testlat, long = testlong, Channel = "3")
 proc.time() - ptm
+
+
+#### Cloud Data ----
+file = "Data/OR_ABI-L2-ACMC-M3_G16_s20172330202189_e20172330204562_c20172330205137.nc"
+Cloud <- nc_open(file)
+
+Cloud_info<- File_info(Cloud)
 
