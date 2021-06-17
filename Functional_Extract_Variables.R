@@ -218,11 +218,16 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
   }
   
   
-  Time <-  ncvar_get(NC_file,"time_bounds") %>% 
+  # Time <-  ncvar_get(NC_file,"time_bounds") %>%
+  #   as.POSIXct(origin = "2000-01-01 12:00:00", tz = "UTC") %>% 
+  #   round.POSIXt("secs")
+  # Begin.Scan <- Time[1]
+  # End.Scan <-  Time[2]
+  
+  Time <-  ncvar_get(NC_file,"t") %>%
+    na_if(-999) %>% 
     as.POSIXct(origin = "2000-01-01 12:00:00", tz = "UTC") %>% 
     round.POSIXt("secs")
-  Begin.Scan <- Time[1]
-  End.Scan <-  Time[2]
   
   Lat <- rad2deg(lat) %>% 
     round(5)
@@ -234,18 +239,18 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
     #Going to include Kappa
     return(list(Latitude = Lat, Longitude = Long, 
                 RadC02 = Value, KappaC02 = Kappa, 
-                Begin.Scan = Begin.Scan,End.Scan = End.Scan,
+                Time = Time,
                 RadC02DQF = DataFlag))
   } else if (Outputname == "RadC03"){
     return(list(Latitude = Lat, Longitude = Long, 
                 RadC03 = Value, KappaC03 = Kappa, 
-                Begin.Scan = Begin.Scan,End.Scan = End.Scan,
+                Time = Time,
                 RadC03DQF = DataFlag))
     
   } else if(Outputname == "BCM"){
     return(list(Latitude = Lat, Longitude = Long, 
                 BCM = Value,
-                Begin.Scan = Begin.Scan, End.Scan = End.Scan,
+                Time = Time,
                 BCMDQF = DataFlag))}
 }
 
@@ -278,29 +283,89 @@ NamePending <- function(file, lat, long){
  return(FileRow)
 }
 
-NamePending(CloudMask[1], testlat,testlong)
+# NamePending(CloudMask[1], testlat,testlong)
+
+ # ptm <- proc.time()
+ # DataCh2<- map_dfr(Channel2files, NamePending, lat = testlat, long = testlong)
+ # 
+ # DataCh3<- map_dfr(Channel3files, NamePending, lat = testlat, long = testlong)
+ # 
+ # DataCloud<- map_dfr(CloudMask, NamePending, lat = testlat, long = testlong)
+
+ # proc.time() - ptm
+ # 
+ # 
+ # test<- merge(DataCh2,DataCh3, by = c("Time", "Latitude", "Longitude"), all = TRUE) %>%
+ #   merge(DataCloud, by = c("Time", "Latitude", "Longitude"),all = TRUE)
+
+# 
+# plan(multisession)
+# 
+# ptm <- proc.time()
+# Futured1<- future_map_dfr(Channel2files, NamePending, lat = testlat, long = testlong)
+# 
+# Futured2<- future_map_dfr(Channel3files, NamePending, lat = testlat, long = testlong)
+# 
+# Futured3<- future_map_dfr(CloudMask, NamePending, lat = testlat, long = testlong)
+# proc.time() - ptm
+# 
+# test<- merge(Futured1,Futured2, by = c("Time", "Latitude", "Longitude"), all = TRUE) %>%
+#   merge(Futured3, by = c("Time", "Latitude", "Longitude"),all = TRUE)
+# 
+Extract_FinalData <- function(DataDirectory, lat, long){
+  #Eventually put in Time
+  files = list.files(path=DataDirectory, full.names = TRUE, recursive=FALSE)
+  
+  Channel2files <- str_subset(files, "L1b-RadC-M3C02_G16")
+  
+  Channel3files <- str_subset(files, "L1b-RadC-M3C03_G16")
+  
+  CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC-M3_G16")
+  
+  
+  DataCh2<- map_dfr(Channel2files, NamePending, lat = testlat, long = testlong)
+  
+  DataCh3<- map_dfr(Channel3files, NamePending, lat = testlat, long = testlong)
+  
+  DataCloud<- map_dfr(CloudMask, NamePending, lat = testlat, long = testlong)
+  
+  FinalData <- merge(DataCh2,DataCh3, by = c("Time", "Latitude", "Longitude"), all = TRUE) %>%
+  merge(DataCloud, by = c("Time", "Latitude", "Longitude"),all = TRUE)
+  
+  return(FinalData)
+}
 
 ptm <- proc.time()
-DataCh2<- map_dfr(Channel2files, NamePending, lat = testlat, long = testlong)
 
-DataCh3<- map_dfr(Channel3files, NamePending, lat = testlat, long = testlong)
+SeqData<- Extract_FinalData("Data/", testlat, testlong)
 
-DataCloud<- map_dfr(CloudMask, NamePending, lat = testlat, long = testlong)
+proc.time() - ptm
+Extract_FinalDataP <- function(DataDirectory, lat, long){
+  #Eventually put in Time
+  plan(multisession)
+  files = list.files(path=DataDirectory, full.names = TRUE, recursive=FALSE)
+  
+  Channel2files <- str_subset(files, "L1b-RadC-M3C02_G16")
+  
+  Channel3files <- str_subset(files, "L1b-RadC-M3C03_G16")
+  
+  CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC-M3_G16")
+  
+  
+  DataCh2 <- future_map_dfr(Channel2files, NamePending, lat = testlat, long = testlong)
+  
+  DataCh3 <- future_map_dfr(Channel3files, NamePending, lat = testlat, long = testlong)
+  
+  DataCloud <- future_map_dfr(CloudMask, NamePending, lat = testlat, long = testlong)
+  
+  FinalData <- merge(DataCh2,DataCh3, by = c("Time", "Latitude", "Longitude"), all = TRUE) %>%
+    merge(DataCloud, by = c("Time", "Latitude", "Longitude"),all = TRUE)
+  
+  return(FinalData)
+}
+ptm <- proc.time()
+ParData<- Extract_FinalDataP("Data/", testlat, testlong)
 
 proc.time() - ptm
 
-
-test<- merge(DataCh2,DataCh3, by = c("Begin.Scan", "Latitude", "Longitude"), all = TRUE) %>% 
-  merge(DataCloud, by = c("Begin.Scan", "Latitude", "Longitude"),all = TRUE)
-
-
-plan(multisession)
-
-ptm <- proc.time()
-Futured1<- future_map_dfr(Channel2files, NamePending, lat = testlat, long = testlong)
-
-Futured2<- future_map_dfr(Channel3files, NamePending, lat = testlat, long = testlong)
-proc.time() - ptm
-
-
-
+#microbenchmark::microbenchmark(Extract_FinalDataP("Data/", testlat, testlong), Extract_FinalData("Data/", testlat, testlong), times = 5)
