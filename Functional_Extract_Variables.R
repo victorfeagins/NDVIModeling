@@ -101,7 +101,8 @@ cos.sq <- function(num){
 }
 coords.to.angle <- function(lat, long, NC_infolist){
   #Lat and long in GRS80
-
+  lat <- deg2rad(lat)
+  long <- deg2rad(long)
   phi.c = lat %>%
     tan() %>% 
     multiply_by((NC_infolist$r.pol/NC_infolist$r.eq)^2) %>% 
@@ -189,7 +190,6 @@ for (i in 1:nrow(Lat_LongDf)){
 }
 
 coords.to.angle(Lat_LongDf$Lat, Lat_LongDf$Long, NC_info)
-coords.to.angle(0.590726971, -1.478135612, NC_info)
 
 
 #It is vectorized
