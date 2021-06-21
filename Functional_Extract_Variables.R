@@ -172,7 +172,7 @@ testlatvector = c(29.425171, 42.360081)
 testlongvector = c(-98.494614, -71.058884)
 Lat_LongDf = data.frame(cbind(Lat = testlatvector, Long = testlongvector))
 
-#Testing vectorized Lat_Long ----
+#Testing vectorized deg2rad ----
 for (i in 1:nrow(Lat_LongDf)){
   print("Lat")
   print(deg2rad(Lat_LongDf$Lat[i]))
@@ -181,13 +181,26 @@ for (i in 1:nrow(Lat_LongDf)){
 }
 deg2rad(Lat_LongDf$Lat)
 deg2rad(Lat_LongDf$Long)
+#Is is vectorized
 
-
-coords.to.angle(testlatvector, testlong, NC_info)
+#Testing Vector Coords.to.angle ----
+for (i in 1:nrow(Lat_LongDf)){
+  print(coords.to.angle(Lat_LongDf$Lat[i], Lat_LongDf$Long[i], NC_info))
+}
 
 coords.to.angle(Lat_LongDf$Lat, Lat_LongDf$Long, NC_info)
+coords.to.angle(0.590726971, -1.478135612, NC_info)
 
-coords.to.index(testlat, testlong, NC_info)
+
+#It is vectorized
+
+
+# Testing vector Coords.to.index ----
+for (i in 1:nrow(Lat_LongDf)){
+  print(coords.to.index(Lat_LongDf$Lat[i], Lat_LongDf$Long[i], NC_info))
+}
+coords.to.index(-98.49461, 29.42517, NC_info)
+coords.to.index(Lat_LongDf$Lat[1], Lat_LongDf$Long[1], NC_info)
 
 
 coords.to.index(Lat_LongDf$Lat, Lat_LongDf$Long, NC_info)
