@@ -199,13 +199,10 @@ coords.to.angle(Lat_LongDf$Lat, Lat_LongDf$Long, NC_info)
 for (i in 1:nrow(Lat_LongDf)){
   print(coords.to.index(Lat_LongDf$Lat[i], Lat_LongDf$Long[i], NC_info))
 }
-coords.to.index(-98.49461, 29.42517, NC_info)
-coords.to.index(Lat_LongDf$Lat[1], Lat_LongDf$Long[1], NC_info)
-
 
 coords.to.index(Lat_LongDf$Lat, Lat_LongDf$Long, NC_info)
 
-#nc.get.var.subset.by.axes This one seems to the most useful.
+#It is vectorized
 
 Extract_Variable <- function(lat, long, NC_file, NC_infolist){
   #Telling the Channel will rename the variables in the output.
@@ -225,20 +222,24 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
     Varname <- "Rad"
     Outputname <- "RadC03"
   }
-  
+Value = vector(mode = "numeric", length(lat))
+DataFlag = vector(mode = "numeric", length(lat))
+for (i in 1:length(lat)){
   if (NC_file$var[[Varname]]$hasScaleFact){
-    Value <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index, X=index$x.index)) %>% 
+    Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i])) %>% 
       multiply_by(NC_file$var[[Varname]]$scaleFact) %>% 
       add(NC_file$var[[Varname]]$addOffset)
   } else {
-    Value <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index, X=index$x.index))
+    Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))
   }
-
   
-  DataFlag <- nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=index$y.index, X=index$x.index))
+  DataFlag[i] <- nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=index$y.index[i], X=index$x.index[i]))
   if (Varname == "Rad"){
     Kappa <-  ncvar_get(NC_file,"kappa0")
   }
+}
+
+
   
   
   # Time <-  ncvar_get(NC_file,"time_bounds") %>%
@@ -252,10 +253,8 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
     as.POSIXct(origin = "2000-01-01 12:00:00", tz = "UTC") %>% 
     round.POSIXt("secs")
   
-  Lat <- rad2deg(lat) %>% 
-    round(5)
-  Long <-  rad2deg(long) %>% 
-    round(5)
+  Lat <- lat
+  Long <-  long
 
   
   if (Outputname == "RadC02"){
@@ -263,21 +262,29 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
     return(list(Latitude = Lat, Longitude = Long, 
                 RadC02 = Value, KappaC02 = Kappa, 
                 Time = Time,
-                RadC02DQF = DataFlag))
+                RadC02DQF = DataFlag) %>% 
+      data.frame())
   } else if (Outputname == "RadC03"){
     return(list(Latitude = Lat, Longitude = Long, 
                 RadC03 = Value, KappaC03 = Kappa, 
                 Time = Time,
-                RadC03DQF = DataFlag))
+                RadC03DQF = DataFlag) %>% 
+             data.frame())
     
   } else if(Outputname == "BCM"){
     return(list(Latitude = Lat, Longitude = Long, 
                 BCM = Value,
                 Time = Time,
-                BCMDQF = DataFlag))}
+                BCMDQF = DataFlag)) %>% 
+      data.frame()}
 }
 
-Time_Bounds <-  ncvar_get(NC_file,"time_bounds")
+Extract_Variable(Lat_LongDf$Lat, Lat_LongDf$Long, NC_file, NC_info) %>% 
+  data.frame()
+
+
+
+#Time_Bounds <-  ncvar_get(NC_file,"time_bounds")
 
 
 Extract_Variable(testlat, testlong,NC_file, NC_info) 
