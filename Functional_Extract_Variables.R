@@ -1,4 +1,5 @@
-# Functional Extracting Variables From NetCDF by coordinates -----------
+
+# Raw Data -----# Functional Extracting Variables From NetCDF by coordinates -----------
 # Author: Victor Feagins
 # Description: Extracting from .nc files variables I need to do analysis in a functional manner
 
@@ -175,13 +176,20 @@ x.index <- RawCoord$x.rad %>%
 testlat = deg2rad(29.425171)
 testlong = deg2rad(-98.494614)
 
-test <- coords.to.angle(testlat, testlong, NC_info) # My functions works
+testlatvector = c(29.425171, 42.360081)
+testlongvector = c(-98.494614, -71.058884)
+Lat_LongDf = data.frame(cbind(Lat = testlatvector, Long = testlongvector))
 
+
+coords.to.angle(testlat, testlong, NC_info) # My functions works
+
+coords.to.angle(Lat_LongDf$Lat, Lat_LongDf$Long, NC_info)
 
 coords.to.index(testlat, testlong, NC_info)
 
 
-# Raw Data -----
+coords.to.index(Lat_LongDf$Lat, Lat_LongDf$Long, NC_info)
+
 #nc.get.var.subset.by.axes This one seems to the most useful.
 
 Extract_Variable <- function(lat, long, NC_file, NC_infolist){
