@@ -17,60 +17,6 @@ library(furrr)
 rad2deg <- function(rad) {(rad * 180) / (pi)}
 deg2rad <- function(deg) {(deg * pi) / (180)}
 
-sin.sq <- function(num){
-  (sin(num))^2
-}
-cos.sq <- function(num){
-  (cos(num))^2
-}
-coords.to.angle <- function(lat, long, NC_infolist){
-  #Lat and long in GRS80
-
-  phi.c = lat %>%
-    tan() %>% 
-    multiply_by((NC_infolist$r.pol/NC_infolist$r.eq)^2) %>% 
-    atan()
-  
-  r.c = phi.c %>% 
-    cos.sq() %>% 
-    multiply_by(NC_infolist$e.value^2) %>% 
-    multiply_by(-1) %>% 
-    add(1) %>% 
-    raise_to_power(-1/2) %>% 
-    multiply_by(NC_infolist$r.pol)
-  
-  s.x = long %>% 
-    subtract(NC_infolist$lambda.o) %>% 
-    cos() %>% 
-    multiply_by(cos(phi.c)) %>% 
-    multiply_by(-r.c) %>% 
-    add(NC_infolist$H)
-  
-  s.y = long %>% 
-    subtract(NC_infolist$lambda.o) %>% 
-    sin() %>% 
-    multiply_by(cos(phi.c)) %>% 
-    multiply_by(-r.c)
-  
-  s.z = phi.c %>% 
-    sin() %>% 
-    multiply_by(r.c)
-  
-  y = atan(s.z/s.x)
-  
-  x = s.x^2 %>% 
-    add(s.y^2) %>% 
-    add(s.z^2) %>% 
-    raise_to_power(-1/2) %>% 
-    multiply_by(-s.y) %>% 
-    asin()
-  
-  list(y.rad = y, x.rad = x)
-}
-## File Info ----
-
-
-
 File_info <- function(NC_file){
   number_pattern <- "-?[\\d]+.?[\\d]*e?-?[\\d]+"
   
@@ -147,7 +93,57 @@ File_info <- function(NC_file){
        lambda.o = lambda.o)
 }
 
-filename = "Data/OR_ABI-L1b-RadC-M3C02_G16_s20172330202189_e20172330204562_c20172330205000.nc"
+sin.sq <- function(num){
+  (sin(num))^2
+}
+cos.sq <- function(num){
+  (cos(num))^2
+}
+coords.to.angle <- function(lat, long, NC_infolist){
+  #Lat and long in GRS80
+
+  phi.c = lat %>%
+    tan() %>% 
+    multiply_by((NC_infolist$r.pol/NC_infolist$r.eq)^2) %>% 
+    atan()
+  
+  r.c = phi.c %>% 
+    cos.sq() %>% 
+    multiply_by(NC_infolist$e.value^2) %>% 
+    multiply_by(-1) %>% 
+    add(1) %>% 
+    raise_to_power(-1/2) %>% 
+    multiply_by(NC_infolist$r.pol)
+  
+  s.x = long %>% 
+    subtract(NC_infolist$lambda.o) %>% 
+    cos() %>% 
+    multiply_by(cos(phi.c)) %>% 
+    multiply_by(-r.c) %>% 
+    add(NC_infolist$H)
+  
+  s.y = long %>% 
+    subtract(NC_infolist$lambda.o) %>% 
+    sin() %>% 
+    multiply_by(cos(phi.c)) %>% 
+    multiply_by(-r.c)
+  
+  s.z = phi.c %>% 
+    sin() %>% 
+    multiply_by(r.c)
+  
+  y = atan(s.z/s.x)
+  
+  x = s.x^2 %>% 
+    add(s.y^2) %>% 
+    add(s.z^2) %>% 
+    raise_to_power(-1/2) %>% 
+    multiply_by(-s.y) %>% 
+    asin()
+  
+  list(y.rad = y, x.rad = x)
+}
+## File Info ----
 filename = "Data/OR_ABI-L1b-RadC-M3C03_G16_s20172330622189_e20172330624562_c20172330625004.nc"
 NC_file <- nc_open(filename)
 
@@ -172,16 +168,22 @@ x.index <- RawCoord$x.rad %>%
 }
 
 
-
-testlat = deg2rad(29.425171)
-testlong = deg2rad(-98.494614)
-
 testlatvector = c(29.425171, 42.360081)
 testlongvector = c(-98.494614, -71.058884)
 Lat_LongDf = data.frame(cbind(Lat = testlatvector, Long = testlongvector))
 
+#Testing vectorized Lat_Long ----
+for (i in 1:nrow(Lat_LongDf)){
+  print("Lat")
+  print(deg2rad(Lat_LongDf$Lat[i]))
+  print("Long")
+  print(deg2rad(Lat_LongDf$Long[i]))
+}
+deg2rad(Lat_LongDf$Lat)
+deg2rad(Lat_LongDf$Long)
 
-coords.to.angle(testlat, testlong, NC_info) # My functions works
+
+coords.to.angle(testlatvector, testlong, NC_info)
 
 coords.to.angle(Lat_LongDf$Lat, Lat_LongDf$Long, NC_info)
 
