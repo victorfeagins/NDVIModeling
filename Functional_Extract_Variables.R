@@ -83,6 +83,16 @@ File_info <- function(NC_file){
     as.numeric() %>% #It is in degrees
     deg2rad() #converting to radians
   
+  #### Time Info ----
+  #Used as a backup if time is NA
+  Time = print.output %>% 
+    str_subset("time_coverage_start") %>% 
+    str_extract_all("[\\d]+[\\.]?[\\d]?") %>% 
+    unlist() %>% 
+    paste(collapse = "-") %>% 
+    as.POSIXct(origin = "2000-01-01 12:00:00", format = "%Y-%m-%d-%H-%M-%S", tz = "UTC")
+  
+  
   list(y.scale_factor = y.scale_factor, y.offset = y.offset,
        x.scale_factor = x.scale_factor, x.offset = x.offset,
        r.eq = r.eq,
@@ -90,8 +100,11 @@ File_info <- function(NC_file){
        e.value = e.value,
        PPH = PPH,
        H = H,
-       lambda.o = lambda.o)
+       lambda.o = lambda.o,
+       Time = Time)
 }
+
+
 
 sin.sq <- function(num){
   (sin(num))^2
@@ -253,6 +266,10 @@ for (i in 1:length(lat)){
     as.POSIXct(origin = "2000-01-01 12:00:00", tz = "UTC") %>% 
     round.POSIXt("secs")
   
+  if (is.na(Time)){
+    
+  }
+  
   Lat <- lat
   Long <-  long
 
@@ -279,8 +296,7 @@ for (i in 1:length(lat)){
       data.frame()}
 }
 
-Extract_Variable(Lat_LongDf$Lat, Lat_LongDf$Long, NC_file, NC_info) %>% 
-  data.frame()
+Extract_Variable(Lat_LongDf$Lat, Lat_LongDf$Long, NC_file, NC_info)
 
 
 
