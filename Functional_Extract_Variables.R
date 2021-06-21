@@ -267,7 +267,7 @@ for (i in 1:length(lat)){
     round.POSIXt("secs")
   
   if (is.na(Time)){
-    
+    Time = NC_infolist$Time
   }
   
   Lat <- lat
@@ -300,10 +300,9 @@ Extract_Variable(Lat_LongDf$Lat, Lat_LongDf$Long, NC_file, NC_info)
 
 
 
-#Time_Bounds <-  ncvar_get(NC_file,"time_bounds")
 
 
-Extract_Variable(testlat, testlong,NC_file, NC_info) 
+Extract_Variable(Lat_LongDf$Lat[1], Lat_LongDf$Long[2],NC_file, NC_info) 
 
 
 
@@ -369,11 +368,11 @@ Extract_FinalData <- function(DataDirectory, lat, long){
   CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC-M3_G16")
   
   
-  DataCh2<- map_dfr(Channel2files, NamePending, lat = testlat, long = testlong)
+  DataCh2<- map_dfr(Channel2files, NamePending, lat = lat, long = long)
   
-  DataCh3<- map_dfr(Channel3files, NamePending, lat = testlat, long = testlong)
+  DataCh3<- map_dfr(Channel3files, NamePending, lat = lat, long = long)
   
-  DataCloud<- map_dfr(CloudMask, NamePending, lat = testlat, long = testlong)
+  DataCloud<- map_dfr(CloudMask, NamePending, lat = lat, long = long)
   
   FinalData <- merge(DataCh2,DataCh3, by = c("Time", "Latitude", "Longitude"), all = TRUE) %>%
   merge(DataCloud, by = c("Time", "Latitude", "Longitude"),all = TRUE)
@@ -383,35 +382,9 @@ Extract_FinalData <- function(DataDirectory, lat, long){
 
 ptm <- proc.time()
 
-SeqData<- Extract_FinalData("Data/", testlat, testlong)
-
-proc.time() - ptm
-Extract_FinalDataP <- function(DataDirectory, lat, long){
-  #Eventually put in Time
-  plan(multisession)
-  files = list.files(path=DataDirectory, full.names = TRUE, recursive=FALSE)
-  
-  Channel2files <- str_subset(files, "L1b-RadC-M3C02_G16")
-  
-  Channel3files <- str_subset(files, "L1b-RadC-M3C03_G16")
-  
-  CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC-M3_G16")
-  
-  
-  DataCh2 <- future_map_dfr(Channel2files, NamePending, lat = testlat, long = testlong)
-  
-  DataCh3 <- future_map_dfr(Channel3files, NamePending, lat = testlat, long = testlong)
-  
-  DataCloud <- future_map_dfr(CloudMask, NamePending, lat = testlat, long = testlong)
-  
-  FinalData <- merge(DataCh2,DataCh3, by = c("Time", "Latitude", "Longitude"), all = TRUE) %>%
-    merge(DataCloud, by = c("Time", "Latitude", "Longitude"),all = TRUE)
-  
-  return(FinalData)
-}
-ptm <- proc.time()
-ParData<- Extract_FinalDataP("Data/", testlat, testlong)
+SeqData<- Extract_FinalData("Data/", Lat_LongDf$Lat, Lat_LongDf$Long)
 
 proc.time() - ptm
 
-#microbenchmark::microbenchmark(Extract_FinalDataP("Data/", testlat, testlong), Extract_FinalData("Data/", testlat, testlong), times = 5)
+SeqData %>% 
+  filter_all(any_vars(is.na(.)))
