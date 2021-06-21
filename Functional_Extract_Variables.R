@@ -1,34 +1,43 @@
-
-# Raw Data -----# Functional Extracting Variables From NetCDF by coordinates -----------
+# Functional Extracting Variables From NetCDF by coordinates -----------
+# Raw Data -----
 # Author: Victor Feagins
 # Description: Extracting from .nc files variables I need to do analysis in a functional manner
 
 ## Packages ----
-library(ncdf4)
-library(ncdf4.helpers)
-library(stringr)
-library(magrittr)
-library(dplyr)
-library(purrr)
+library(ncdf4) #Used to open .nc files
+library(ncdf4.helpers) #Used to extract variables by index 
+library(stringr)# Used to manipulate strings
+library(magrittr)# Used for pipe friendly operations
+library(dplyr)# Used for manipulate dataframes
+library(purrr)# Used for applying functions on vectors
 
-library(future)
-library(furrr)
-## Utility functions ----
+
+##Packages used for analysis ----
+library(ggplot2)
+
+## Functions ----
 rad2deg <- function(rad) {(rad * 180) / (pi)}
 deg2rad <- function(deg) {(deg * pi) / (180)}
 
 File_info <- function(NC_file){
-  number_pattern <- "-?[\\d]+.?[\\d]*e?-?[\\d]+"
+  # See Table 5.1.2.8 in volume 3 LEVEL 1B PRODUCTS
+  #Parameters Required to Navigate Data Points on ABI Fixed Grid
+  
+  
+  number_pattern <- "-?[\\d]+.?[\\d]*e?-?[\\d]+" #Used as a regularexpression to extract numbers
   
   ### Printing_output ----
+  #Many values are not outright extractable from the ncdf4 object
+  #But are present when examining the ncdf4 output
   print.output<- capture.output(NC_file)
   
   ### Coordinate Information -----
   Factor_Offset<- print.output %>% 
     str_subset("scale_factor|add_offset") #looking for scale factor or add_offset
   LengthFactor_Offset=length(Factor_Offset)
-  
+  #assumes that the y.scalefactor & x.scalefactor are the last one in the file.
   #### y scale_factor and y offset -----
+  
   y.scale_factor = Factor_Offset[LengthFactor_Offset-3] %>% 
     str_extract(number_pattern) %>% 
     as.numeric()
@@ -60,7 +69,7 @@ File_info <- function(NC_file){
     as.numeric()
   
   #### 1st eccentricity -----
-  
+  #Look at table 5.1.2.8 for equation
   e.value <- sqrt((r.eq^2-r.pol^2)/r.eq^2)
   
   
@@ -72,11 +81,12 @@ File_info <- function(NC_file){
     as.numeric()
   
   #### Satellite height from center of earth (m) -----
-  
+  #Look at table 5.1.2.8 for equation
   H <-  PPH + r.eq
   
   
   #### longitude_of_projection_origin (rad) -----
+  #Converting to radians since all equation uses rads
   lambda.o <- print.output %>% 
     str_subset("longitude_of_projection_origin") %>% 
     str_extract(number_pattern) %>% 
@@ -84,7 +94,8 @@ File_info <- function(NC_file){
     deg2rad() #converting to radians
   
   #### Time Info ----
-  #Used as a backup if time is NA
+  #Used as time info for the files.
+  #Could also extract time infomation from ncdf4 object but sometimes it is missing
   Time = print.output %>% 
     str_subset("time_coverage_start") %>% 
     str_extract_all("[\\d]+[\\.]?[\\d]?") %>% 
@@ -106,12 +117,7 @@ File_info <- function(NC_file){
 
 
 
-sin.sq <- function(num){
-  (sin(num))^2
-}
-cos.sq <- function(num){
-  (cos(num))^2
-}
+
 coords.to.angle <- function(lat, long, NC_infolist){
   #Lat and long in GRS80
   lat <- deg2rad(lat)
@@ -122,7 +128,8 @@ coords.to.angle <- function(lat, long, NC_infolist){
     atan()
   
   r.c = phi.c %>% 
-    cos.sq() %>% 
+    cos() %>% 
+    raise_to_power(2) %>% 
     multiply_by(NC_infolist$e.value^2) %>% 
     multiply_by(-1) %>% 
     add(1) %>% 
@@ -224,14 +231,14 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
   
   filename <-  NC_file$filename 
   
-  if(str_detect(filename, "OR_ABI-L2-ACMC-M3")){
+  if(str_detect(filename, "OR_ABI-L2-ACMC")){
     Varname <-  "BCM"
     Outputname <-  "BCM"
-  } else if (str_detect(filename, "L1b-RadC-M3C02_G16")){
+  } else if (str_detect(filename, "L1b-RadC-M[\\d]C02_G16")){
     Varname <- "Rad"
     Outputname <- "RadC02" 
     
-  } else if (str_detect(filename, "L1b-RadC-M3C03_G16")){
+  } else if (str_detect(filename, "L1b-RadC-M[\\d]C03_G16")){
     Varname <- "Rad"
     Outputname <- "RadC03"
   }
@@ -291,30 +298,16 @@ Time = NC_infolist$Time
       data.frame()}
 }
 
+
+#Testing Extract_Variables ----
 Extract_Variable(Lat_LongDf$Lat, Lat_LongDf$Long, NC_file, NC_info)
+Extract_Variable(Lat_LongDf$Lat[1], Lat_LongDf$Long[2],NC_file, NC_info)
 
+test <- nc_open("Data/OR_ABI-L2-ACMC-M4_G16_s20172330155227_e20172330155227_c20172330201262.nc")
+NC_info_cloud <- File_info(test)
+Extract_Variable(Lat_LongDf$Lat, Lat_LongDf$Long, test, NC_info_cloud)
 
-
-
-
-Extract_Variable(Lat_LongDf$Lat[1], Lat_LongDf$Long[2],NC_file, NC_info) 
-
-
-
-
-#### Temporally Extract the variables
-
-DataDirectory = "Data/"
-
-files = list.files(path=DataDirectory, full.names = TRUE, recursive=FALSE)
-
-Channel2files <- str_subset(files, "L1b-RadC-M3C02_G16")
-
-Channel3files <- str_subset(files, "L1b-RadC-M3C03_G16")
-
-CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC-M3_G16")
-
-NamePending <- function(file, lat, long){
+Open_Extract_Value <- function(file, lat, long){
  NC_file <- nc_open(file)
  NC_info <- File_info(NC_file)
  FileRow<- Extract_Variable(lat,long,NC_file,NC_info) %>% 
@@ -322,52 +315,34 @@ NamePending <- function(file, lat, long){
  nc_close(NC_file)
  return(FileRow)
 }
+#Testing Open_Extract_Value ----
+Open_Extract_Value("Data/OR_ABI-L1b-RadC-M3C02_G16_s20172330202189_e20172330204562_c20172330205000.nc",
+                   Lat_LongDf$Lat,
+                   Lat_LongDf$Long)
+Open_Extract_Value("Data/OR_ABI-L1b-RadC-M3C03_G16_s20172330202189_e20172330204562_c20172330205008.nc",
+                   Lat_LongDf$Lat,
+                   Lat_LongDf$Long)
 
-# NamePending(CloudMask[1], testlat,testlong)
+Open_Extract_Value("Data/OR_ABI-L2-ACMC-M4_G16_s20172330105227_e20172330105227_c20172330111256.nc",
+                   Lat_LongDf$Lat,
+                   Lat_LongDf$Long)
 
- # ptm <- proc.time()
- # DataCh2<- map_dfr(Channel2files, NamePending, lat = testlat, long = testlong)
- # 
- # DataCh3<- map_dfr(Channel3files, NamePending, lat = testlat, long = testlong)
- # 
- # DataCloud<- map_dfr(CloudMask, NamePending, lat = testlat, long = testlong)
-
- # proc.time() - ptm
- # 
- # 
- # test<- merge(DataCh2,DataCh3, by = c("Time", "Latitude", "Longitude"), all = TRUE) %>%
- #   merge(DataCloud, by = c("Time", "Latitude", "Longitude"),all = TRUE)
-
-# 
-# plan(multisession)
-# 
-# ptm <- proc.time()
-# Futured1<- future_map_dfr(Channel2files, NamePending, lat = testlat, long = testlong)
-# 
-# Futured2<- future_map_dfr(Channel3files, NamePending, lat = testlat, long = testlong)
-# 
-# Futured3<- future_map_dfr(CloudMask, NamePending, lat = testlat, long = testlong)
-# proc.time() - ptm
-# 
-# test<- merge(Futured1,Futured2, by = c("Time", "Latitude", "Longitude"), all = TRUE) %>%
-#   merge(Futured3, by = c("Time", "Latitude", "Longitude"),all = TRUE)
-# 
-Extract_FinalData <- function(DataDirectory, lat, long){
+Extract_Dataframe <- function(DataDirectory, lat, long){
   #Eventually put in Time
   files = list.files(path=DataDirectory, full.names = TRUE, recursive=FALSE)
   
-  Channel2files <- str_subset(files, "L1b-RadC-M3C02_G16")
+  Channel2files <- str_subset(files, "L1b-RadC-M[\\d]C02_G16")
   
-  Channel3files <- str_subset(files, "L1b-RadC-M3C03_G16")
+  Channel3files <- str_subset(files, "L1b-RadC-M[\\d]C03_G16")
   
-  CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC-M3_G16")
+  CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC")
   
   
-  DataCh2<- map_dfr(Channel2files, NamePending, lat = lat, long = long)
+  DataCh2<- map_dfr(Channel2files, Open_Extract_Value, lat = lat, long = long)
   
-  DataCh3<- map_dfr(Channel3files, NamePending, lat = lat, long = long)
+  DataCh3<- map_dfr(Channel3files, Open_Extract_Value, lat = lat, long = long)
   
-  DataCloud<- map_dfr(CloudMask, NamePending, lat = lat, long = long)
+  DataCloud<- map_dfr(CloudMask, Open_Extract_Value, lat = lat, long = long)
   
   FinalData <- merge(DataCh2,DataCh3, by = c("Time", "Latitude", "Longitude"), all = TRUE) %>%
   merge(DataCloud, by = c("Time", "Latitude", "Longitude"),all = TRUE)
@@ -375,11 +350,49 @@ Extract_FinalData <- function(DataDirectory, lat, long){
   return(FinalData)
 }
 
+# files = list.files(path="Data/", full.names = TRUE, recursive=FALSE)
+# 
+# files %>% 
+#   str_subset("L1b-RadC-M[\\d]C03_G16") %>% 
+#   length()
+  
+
 ptm <- proc.time()
 
-SeqData<- Extract_FinalData("Data/", Lat_LongDf$Lat, Lat_LongDf$Long)
+SeqData<- Extract_Dataframe("Data/", 32.457, -91.9743)
 
 proc.time() - ptm
 
 SeqData %>% 
-  filter_all(any_vars(is.na(.)))
+  filter_all(any_vars(is.na(.))) #For some reason time of a different day are in there.
+
+#Calcuate NDVI Values -----
+
+library(GOESDiurnalNDVI)
+
+Test <- SeqData %>% 
+  filter(Time >= as.POSIXct("2017-08-21")) %>% 
+   mutate(R3 = RadC03 * KappaC03,
+          R2 = RadC02 * KappaC02,
+          NDVI = (R3-R2)/(R3+R2))
+  
+# Test %>% 
+#   filter(Time >= as.POSIXct("2017-08-21 12:00:00")) %>% 
+#   ggplot(mapping = aes(Time, NDVI)) +
+#   geom_point()
+#   
+
+TestData <- read.csv("GOES_NDVI_DiurnalRussellSage_2017233.csv") %>% 
+  t()
+
+
+Test2 <- Test %>% 
+  filter(Time >= as.POSIXct("2017-08-21 12:00:00"))
+
+plot(Test2$Time, Test2$R2, "l")
+plot(Test2$Time, Test2$R3, "l")
+
+plot(Test2$Time, Test2$NDVI, "l", main="Victor's NDVI")
+plot(TestData[,2], TestData[,1], "l", main="NDVI_GOES_Main's NDVI?")
+
+plot(Test2$Time, calNDVI(Test2$R2, Test2$R3), 'l')
