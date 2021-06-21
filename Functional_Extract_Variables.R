@@ -254,21 +254,16 @@ for (i in 1:length(lat)){
 
 
   
+Time = NC_infolist$Time
   
-  # Time <-  ncvar_get(NC_file,"time_bounds") %>%
+  # Time <-  ncvar_get(NC_file,"t") %>%
+  #   na_if(-999) %>% 
   #   as.POSIXct(origin = "2000-01-01 12:00:00", tz = "UTC") %>% 
   #   round.POSIXt("secs")
-  # Begin.Scan <- Time[1]
-  # End.Scan <-  Time[2]
-  
-  Time <-  ncvar_get(NC_file,"t") %>%
-    na_if(-999) %>% 
-    as.POSIXct(origin = "2000-01-01 12:00:00", tz = "UTC") %>% 
-    round.POSIXt("secs")
-  
-  if (is.na(Time)){
-    Time = NC_infolist$Time
-  }
+  # 
+  # if (is.na(Time)){
+  #   Time = NC_infolist$Time
+  # }
   
   Lat <- lat
   Long <-  long
