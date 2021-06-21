@@ -1,4 +1,5 @@
-# Functional Extracting Variables From NetCDF by coordinates -----------
+
+# Raw Data -----# Functional Extracting Variables From NetCDF by coordinates -----------
 # Author: Victor Feagins
 # Description: Extracting from .nc files variables I need to do analysis in a functional manner
 
@@ -15,60 +16,6 @@ library(furrr)
 ## Utility functions ----
 rad2deg <- function(rad) {(rad * 180) / (pi)}
 deg2rad <- function(deg) {(deg * pi) / (180)}
-
-sin.sq <- function(num){
-  (sin(num))^2
-}
-cos.sq <- function(num){
-  (cos(num))^2
-}
-coords.to.angle <- function(lat, long, NC_infolist){
-  #Lat and long in GRS80
-
-  phi.c = lat %>%
-    tan() %>% 
-    multiply_by((NC_infolist$r.pol/NC_infolist$r.eq)^2) %>% 
-    atan()
-  
-  r.c = phi.c %>% 
-    cos.sq() %>% 
-    multiply_by(NC_infolist$e.value^2) %>% 
-    multiply_by(-1) %>% 
-    add(1) %>% 
-    raise_to_power(-1/2) %>% 
-    multiply_by(NC_infolist$r.pol)
-  
-  s.x = long %>% 
-    subtract(NC_infolist$lambda.o) %>% 
-    cos() %>% 
-    multiply_by(cos(phi.c)) %>% 
-    multiply_by(-r.c) %>% 
-    add(NC_infolist$H)
-  
-  s.y = long %>% 
-    subtract(NC_infolist$lambda.o) %>% 
-    sin() %>% 
-    multiply_by(cos(phi.c)) %>% 
-    multiply_by(-r.c)
-  
-  s.z = phi.c %>% 
-    sin() %>% 
-    multiply_by(r.c)
-  
-  y = atan(s.z/s.x)
-  
-  x = s.x^2 %>% 
-    add(s.y^2) %>% 
-    add(s.z^2) %>% 
-    raise_to_power(-1/2) %>% 
-    multiply_by(-s.y) %>% 
-    asin()
-  
-  list(y.rad = y, x.rad = x)
-}
-## File Info ----
-
-
 
 File_info <- function(NC_file){
   number_pattern <- "-?[\\d]+.?[\\d]*e?-?[\\d]+"
@@ -146,7 +93,58 @@ File_info <- function(NC_file){
        lambda.o = lambda.o)
 }
 
-filename = "Data/OR_ABI-L1b-RadC-M3C02_G16_s20172330202189_e20172330204562_c20172330205000.nc"
+sin.sq <- function(num){
+  (sin(num))^2
+}
+cos.sq <- function(num){
+  (cos(num))^2
+}
+coords.to.angle <- function(lat, long, NC_infolist){
+  #Lat and long in GRS80
+  lat <- deg2rad(lat)
+  long <- deg2rad(long)
+  phi.c = lat %>%
+    tan() %>% 
+    multiply_by((NC_infolist$r.pol/NC_infolist$r.eq)^2) %>% 
+    atan()
+  
+  r.c = phi.c %>% 
+    cos.sq() %>% 
+    multiply_by(NC_infolist$e.value^2) %>% 
+    multiply_by(-1) %>% 
+    add(1) %>% 
+    raise_to_power(-1/2) %>% 
+    multiply_by(NC_infolist$r.pol)
+  
+  s.x = long %>% 
+    subtract(NC_infolist$lambda.o) %>% 
+    cos() %>% 
+    multiply_by(cos(phi.c)) %>% 
+    multiply_by(-r.c) %>% 
+    add(NC_infolist$H)
+  
+  s.y = long %>% 
+    subtract(NC_infolist$lambda.o) %>% 
+    sin() %>% 
+    multiply_by(cos(phi.c)) %>% 
+    multiply_by(-r.c)
+  
+  s.z = phi.c %>% 
+    sin() %>% 
+    multiply_by(r.c)
+  
+  y = atan(s.z/s.x)
+  
+  x = s.x^2 %>% 
+    add(s.y^2) %>% 
+    add(s.z^2) %>% 
+    raise_to_power(-1/2) %>% 
+    multiply_by(-s.y) %>% 
+    asin()
+  
+  list(y.rad = y, x.rad = x)
+}
+## File Info ----
 filename = "Data/OR_ABI-L1b-RadC-M3C03_G16_s20172330622189_e20172330624562_c20172330625004.nc"
 NC_file <- nc_open(filename)
 
@@ -171,18 +169,40 @@ x.index <- RawCoord$x.rad %>%
 }
 
 
+testlatvector = c(29.425171, 42.360081)
+testlongvector = c(-98.494614, -71.058884)
+Lat_LongDf = data.frame(cbind(Lat = testlatvector, Long = testlongvector))
 
-testlat = deg2rad(29.425171)
-testlong = deg2rad(-98.494614)
+#Testing vectorized deg2rad ----
+for (i in 1:nrow(Lat_LongDf)){
+  print("Lat")
+  print(deg2rad(Lat_LongDf$Lat[i]))
+  print("Long")
+  print(deg2rad(Lat_LongDf$Long[i]))
+}
+deg2rad(Lat_LongDf$Lat)
+deg2rad(Lat_LongDf$Long)
+#Is is vectorized
 
-test <- coords.to.angle(testlat, testlong, NC_info) # My functions works
+#Testing Vector Coords.to.angle ----
+for (i in 1:nrow(Lat_LongDf)){
+  print(coords.to.angle(Lat_LongDf$Lat[i], Lat_LongDf$Long[i], NC_info))
+}
+
+coords.to.angle(Lat_LongDf$Lat, Lat_LongDf$Long, NC_info)
 
 
-coords.to.index(testlat, testlong, NC_info)
+#It is vectorized
 
 
-# Raw Data -----
-#nc.get.var.subset.by.axes This one seems to the most useful.
+# Testing vector Coords.to.index ----
+for (i in 1:nrow(Lat_LongDf)){
+  print(coords.to.index(Lat_LongDf$Lat[i], Lat_LongDf$Long[i], NC_info))
+}
+
+coords.to.index(Lat_LongDf$Lat, Lat_LongDf$Long, NC_info)
+
+#It is vectorized
 
 Extract_Variable <- function(lat, long, NC_file, NC_infolist){
   #Telling the Channel will rename the variables in the output.
@@ -202,20 +222,24 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
     Varname <- "Rad"
     Outputname <- "RadC03"
   }
-  
+Value = vector(mode = "numeric", length(lat))
+DataFlag = vector(mode = "numeric", length(lat))
+for (i in 1:length(lat)){
   if (NC_file$var[[Varname]]$hasScaleFact){
-    Value <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index, X=index$x.index)) %>% 
+    Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i])) %>% 
       multiply_by(NC_file$var[[Varname]]$scaleFact) %>% 
       add(NC_file$var[[Varname]]$addOffset)
   } else {
-    Value <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index, X=index$x.index))
+    Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))
   }
-
   
-  DataFlag <- nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=index$y.index, X=index$x.index))
+  DataFlag[i] <- nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=index$y.index[i], X=index$x.index[i]))
   if (Varname == "Rad"){
     Kappa <-  ncvar_get(NC_file,"kappa0")
   }
+}
+
+
   
   
   # Time <-  ncvar_get(NC_file,"time_bounds") %>%
@@ -229,10 +253,8 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
     as.POSIXct(origin = "2000-01-01 12:00:00", tz = "UTC") %>% 
     round.POSIXt("secs")
   
-  Lat <- rad2deg(lat) %>% 
-    round(5)
-  Long <-  rad2deg(long) %>% 
-    round(5)
+  Lat <- lat
+  Long <-  long
 
   
   if (Outputname == "RadC02"){
@@ -240,21 +262,29 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
     return(list(Latitude = Lat, Longitude = Long, 
                 RadC02 = Value, KappaC02 = Kappa, 
                 Time = Time,
-                RadC02DQF = DataFlag))
+                RadC02DQF = DataFlag) %>% 
+      data.frame())
   } else if (Outputname == "RadC03"){
     return(list(Latitude = Lat, Longitude = Long, 
                 RadC03 = Value, KappaC03 = Kappa, 
                 Time = Time,
-                RadC03DQF = DataFlag))
+                RadC03DQF = DataFlag) %>% 
+             data.frame())
     
   } else if(Outputname == "BCM"){
     return(list(Latitude = Lat, Longitude = Long, 
                 BCM = Value,
                 Time = Time,
-                BCMDQF = DataFlag))}
+                BCMDQF = DataFlag)) %>% 
+      data.frame()}
 }
 
-Time_Bounds <-  ncvar_get(NC_file,"time_bounds")
+Extract_Variable(Lat_LongDf$Lat, Lat_LongDf$Long, NC_file, NC_info) %>% 
+  data.frame()
+
+
+
+#Time_Bounds <-  ncvar_get(NC_file,"time_bounds")
 
 
 Extract_Variable(testlat, testlong,NC_file, NC_info) 
