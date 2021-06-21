@@ -246,9 +246,9 @@ Value = vector(mode = "numeric", length(lat))
 DataFlag = vector(mode = "numeric", length(lat))
 for (i in 1:length(lat)){
   if (NC_file$var[[Varname]]$hasScaleFact){
-    Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i])) %>% 
-      multiply_by(NC_file$var[[Varname]]$scaleFact) %>% 
-      add(NC_file$var[[Varname]]$addOffset)
+    Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i])) #%>% 
+      # multiply_by(NC_file$var[[Varname]]$scaleFact) %>% 
+      # add(NC_file$var[[Varname]]$addOffset)
   } else {
     Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))
   }
