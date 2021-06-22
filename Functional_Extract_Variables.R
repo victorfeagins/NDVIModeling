@@ -246,9 +246,9 @@ Value = vector(mode = "numeric", length(lat))
 DataFlag = vector(mode = "numeric", length(lat))
 for (i in 1:length(lat)){
   if (NC_file$var[[Varname]]$hasScaleFact){
-    Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i])) #%>% 
-      # multiply_by(NC_file$var[[Varname]]$scaleFact) %>% 
-      # add(NC_file$var[[Varname]]$addOffset)
+    Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i])) %>% 
+       subtract(NC_file$var[[Varname]]$addOffset) %>% 
+       divide_by(NC_file$var[[Varname]]$scaleFact)
   } else {
     Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))
   }
@@ -359,11 +359,11 @@ Extract_Dataframe <- function(DataDirectory, lat, long){
 
 ptm <- proc.time()
 
-SeqData<- Extract_Dataframe("Data/", 32.457, -91.9743)
+SeqData<- Extract_Dataframe("/projectnb/dietzelab/GOES_DataFTP/", 32.457, -91.9743)
 
 proc.time() - ptm
 
-SeqData %>% 
+Missing<- SeqData %>% 
   filter_all(any_vars(is.na(.))) #For some reason time of a different day are in there.
 
 #Calcuate NDVI Values -----
@@ -386,13 +386,13 @@ TestData <- read.csv("GOES_NDVI_DiurnalRussellSage_2017233.csv") %>%
   t()
 
 
-Test2 <- Test %>% 
-  filter(Time >= as.POSIXct("2017-08-21 12:00:00"))
-
-plot(Test2$Time, Test2$R2, "l")
-plot(Test2$Time, Test2$R3, "l")
-
-plot(Test2$Time, Test2$NDVI, "l", main="Victor's NDVI")
-plot(TestData[,2], TestData[,1], "l", main="NDVI_GOES_Main's NDVI?")
-
-plot(Test2$Time, calNDVI(Test2$R2, Test2$R3), 'l')
+# Test2 <- Test %>% 
+#   filter(Time >= as.POSIXct("2017-08-21 12:00:00"))
+# 
+# plot(Test2$Time, Test2$R2, "l")
+# plot(Test2$Time, Test2$R3, "l")
+# 
+# plot(Test2$Time, Test2$NDVI, "l", main="Victor's NDVI")
+# plot(TestData[,2], TestData[,1], "l", main="NDVI_GOES_Main's NDVI?")
+# 
+# plot(Test2$Time, calNDVI(Test2$R2, Test2$R3), 'l')
