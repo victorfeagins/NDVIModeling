@@ -5,12 +5,12 @@ library(ggplot2)
 library(lubridate) 
 library(scales)
 
-df.scale <- read.csv("TestDataScale.csv") %>% 
+df.scale <- read.csv("TestDataOffset.csv") %>% 
   mutate(R2 = RadC02 * KappaC02,
          R3 = RadC03 * KappaC03,
          NDVI = (R3-R2)/(R3+R2))
 
-df.noscale <-  read.csv("TestDataNoScale.csv") %>% 
+df.noscale <-  read.csv("TestDataNoOffset.csv") %>% 
   mutate(R2 = RadC02 * KappaC02,
          R3 = RadC03 * KappaC03,
          NDVI = (R3-R2)/(R3+R2))
