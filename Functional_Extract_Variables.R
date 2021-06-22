@@ -9,11 +9,11 @@ Datadirectory = "Data/" #Folder where GOES data is
 Latiude = 32.457 #Can be a vector, in degrees 
 Longitude = -91.9743 #Can be a vector, in degrees
 numcores = 4 #For sequential put 1
-applyingoffset = TRUE #Do you want to apply the scalefactor and offset to variables in ncfiles
+applyingoffset = FALSE #Do you want to apply the scalefactor and offset to variables in ncfiles
 
 #Output ----
 
-outputfilepath = "TestData.csv" #Name of file and path where want to be saved
+outputfilepath = "TestDataNoOffset.csv" #Name of file and path where want to be saved
 
 
 
@@ -414,11 +414,11 @@ Extract_Dataframe_P <- function(DataDirectory, lat, long, applyingoffset = TRUE)
   CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC")
   
   
-  DataCh2<- future_map_dfr(Channel2files, Open_Extract_Value, lat = lat, long = long)
+  DataCh2<- future_map_dfr(Channel2files, Open_Extract_Value, lat = lat, long = long, applyingoffset = applyingoffset)
   
-  DataCh3<- future_map_dfr(Channel3files, Open_Extract_Value, lat = lat, long = long)
+  DataCh3<- future_map_dfr(Channel3files, Open_Extract_Value, lat = lat, long = long, applyingoffset = applyingoffset)
   
-  DataCloud<- future_map_dfr(CloudMask, Open_Extract_Value, lat = lat, long = long)
+  DataCloud<- future_map_dfr(CloudMask, Open_Extract_Value, lat = lat, long = long, applyingoffset = applyingoffset)
   
   FinalData <- merge(DataCh2,DataCh3, by = c("Time", "Latitude", "Longitude"), all = TRUE) %>%
     merge(DataCloud, by = c("Time", "Latitude", "Longitude"),all = TRUE)
