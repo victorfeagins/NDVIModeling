@@ -11,6 +11,10 @@ library(magrittr)# Used for pipe friendly operations
 library(dplyr)# Used for manipulate dataframes
 library(purrr)# Used for applying functions on vectors
 
+#Parrallel ----
+library(future)
+library(furrr)
+
 
 ##Packages used for analysis ----
 library(ggplot2)
@@ -365,6 +369,46 @@ proc.time() - ptm
 
 Missing<- SeqData %>% 
   filter_all(any_vars(is.na(.))) #For some reason time of a different day are in there.
+
+
+Extract_Dataframe_P <- function(DataDirectory, lat, long){
+  #Eventually put in Time
+  files = list.files(path=DataDirectory, full.names = TRUE, recursive=FALSE)
+  
+  Channel2files <- str_subset(files, "L1b-RadC-M[\\d]C02_G16")
+  
+  Channel3files <- str_subset(files, "L1b-RadC-M[\\d]C03_G16")
+  
+  CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC")
+  
+  
+  DataCh2<- future_map_dfr(Channel2files, Open_Extract_Value, lat = lat, long = long)
+  
+  DataCh3<- future_map_dfr(Channel3files, Open_Extract_Value, lat = lat, long = long)
+  
+  DataCloud<- future_map_dfr(CloudMask, Open_Extract_Value, lat = lat, long = long)
+  
+  FinalData <- merge(DataCh2,DataCh3, by = c("Time", "Latitude", "Longitude"), all = TRUE) %>%
+    merge(DataCloud, by = c("Time", "Latitude", "Longitude"),all = TRUE)
+  
+  return(FinalData)
+}
+
+plan("s")
+
+#options(mc.cores = 4)
+
+ptm <- proc.time()
+
+ParData<- Extract_Dataframe_P("/projectnb/dietzelab/GOES_DataFTP/", 32.457, -91.9743)
+
+proc.time() - ptm
+
+
+
+
+
+
 
 #Calcuate NDVI Values -----
 
