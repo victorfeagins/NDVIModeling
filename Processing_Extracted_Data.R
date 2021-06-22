@@ -21,7 +21,7 @@ df.noscale <-  read.csv("TestDataNoScale.csv") %>%
 suntimes<- getSunlightTimes(date = as.Date(df.scale$Time[2]),
                  lat = df.scale$Latitude[2],
                  lon = df.scale$Longitude[2])
-                 #keep=c("nauticalDawn","nauticalDusk")
+                 keep=c("nauticalDawn","nauticalDusk")
 suntimes$nauticalDawn
 
 suntimes$nauticalDusk
