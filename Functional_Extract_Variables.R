@@ -331,28 +331,28 @@ Open_Extract_Value("Data/OR_ABI-L2-ACMC-M4_G16_s20172330105227_e20172330105227_c
                    Lat_LongDf$Lat,
                    Lat_LongDf$Long)
 
-Extract_Dataframe <- function(DataDirectory, lat, long){
-  #Eventually put in Time
-  files = list.files(path=DataDirectory, full.names = TRUE, recursive=FALSE)
-  
-  Channel2files <- str_subset(files, "L1b-RadC-M[\\d]C02_G16")
-  
-  Channel3files <- str_subset(files, "L1b-RadC-M[\\d]C03_G16")
-  
-  CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC")
-  
-  
-  DataCh2<- map_dfr(Channel2files, Open_Extract_Value, lat = lat, long = long)
-  
-  DataCh3<- map_dfr(Channel3files, Open_Extract_Value, lat = lat, long = long)
-  
-  DataCloud<- map_dfr(CloudMask, Open_Extract_Value, lat = lat, long = long)
-  
-  FinalData <- merge(DataCh2,DataCh3, by = c("Time", "Latitude", "Longitude"), all = TRUE) %>%
-  merge(DataCloud, by = c("Time", "Latitude", "Longitude"),all = TRUE)
-  
-  return(FinalData)
-}
+# Extract_Dataframe <- function(DataDirectory, lat, long){
+#   #Eventually put in Time
+#   files = list.files(path=DataDirectory, full.names = TRUE, recursive=FALSE)
+#   
+#   Channel2files <- str_subset(files, "L1b-RadC-M[\\d]C02_G16")
+#   
+#   Channel3files <- str_subset(files, "L1b-RadC-M[\\d]C03_G16")
+#   
+#   CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC")
+#   
+#   
+#   DataCh2<- map_dfr(Channel2files, Open_Extract_Value, lat = lat, long = long)
+#   
+#   DataCh3<- map_dfr(Channel3files, Open_Extract_Value, lat = lat, long = long)
+#   
+#   DataCloud<- map_dfr(CloudMask, Open_Extract_Value, lat = lat, long = long)
+#   
+#   FinalData <- merge(DataCh2,DataCh3, by = c("Time", "Latitude", "Longitude"), all = TRUE) %>%
+#   merge(DataCloud, by = c("Time", "Latitude", "Longitude"),all = TRUE)
+#   
+#   return(FinalData)
+# }
 
 # files = list.files(path="Data/", full.names = TRUE, recursive=FALSE)
 # 
@@ -361,14 +361,14 @@ Extract_Dataframe <- function(DataDirectory, lat, long){
 #   length()
   
 
-ptm <- proc.time()
-
-SeqData<- Extract_Dataframe("/projectnb/dietzelab/GOES_DataFTP/", 32.457, -91.9743)
-
-proc.time() - ptm
-
-Missing<- SeqData %>% 
-  filter_all(any_vars(is.na(.))) #For some reason time of a different day are in there.
+# ptm <- proc.time()
+# 
+# SeqData<- Extract_Dataframe("/projectnb/dietzelab/GOES_DataFTP/", 32.457, -91.9743)
+# 
+# proc.time() - ptm
+# 
+# Missing<- SeqData %>%
+#   filter_all(any_vars(is.na(.))) #For some reason time of a different day are in there.
 
 
 Extract_Dataframe_P <- function(DataDirectory, lat, long){
@@ -396,50 +396,15 @@ Extract_Dataframe_P <- function(DataDirectory, lat, long){
 
 
 
-#options(mc.cores = 4)
-
-#plan(multisession, workers = 4)
-plan(sequential)
+plan(multisession, workers = 4)
+#plan(sequential)
 
 ptm <- proc.time()
 
-ParData<- Extract_Dataframe_P("/projectnb/dietzelab/GOES_DataFTP/", 32.457, -91.9743)
+ParData<- Extract_Dataframe_P("Data", 32.457, -91.9743)
 
 proc.time() - ptm
 
+ParData %>%
+filter_all(any_vars(is.na(.))) #For some reason time of a different day are in there.
 
-
-
-
-
-
-#Calcuate NDVI Values -----
-
-library(GOESDiurnalNDVI)
-
-Test <- SeqData %>% 
-  filter(Time >= as.POSIXct("2017-08-21")) %>% 
-   mutate(R3 = RadC03 * KappaC03,
-          R2 = RadC02 * KappaC02,
-          NDVI = (R3-R2)/(R3+R2))
-  
-# Test %>% 
-#   filter(Time >= as.POSIXct("2017-08-21 12:00:00")) %>% 
-#   ggplot(mapping = aes(Time, NDVI)) +
-#   geom_point()
-#   
-
-TestData <- read.csv("GOES_NDVI_DiurnalRussellSage_2017233.csv") %>% 
-  t()
-
-
-# Test2 <- Test %>% 
-#   filter(Time >= as.POSIXct("2017-08-21 12:00:00"))
-# 
-# plot(Test2$Time, Test2$R2, "l")
-# plot(Test2$Time, Test2$R3, "l")
-# 
-# plot(Test2$Time, Test2$NDVI, "l", main="Victor's NDVI")
-# plot(TestData[,2], TestData[,1], "l", main="NDVI_GOES_Main's NDVI?")
-# 
-# plot(Test2$Time, calNDVI(Test2$R2, Test2$R3), 'l')
