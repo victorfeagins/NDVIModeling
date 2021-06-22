@@ -250,9 +250,9 @@ Value = vector(mode = "numeric", length(lat))
 DataFlag = vector(mode = "numeric", length(lat))
 for (i in 1:length(lat)){
   if (NC_file$var[[Varname]]$hasScaleFact){
-    Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i])) #%>% 
-       #subtract(NC_file$var[[Varname]]$addOffset) %>% 
-       #divide_by(NC_file$var[[Varname]]$scaleFact)
+    Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))     Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i])) %>% 
+       subtract(NC_file$var[[Varname]]$addOffset) %>% 
+       divide_by(NC_file$var[[Varname]]$scaleFact)
   } else {
     Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))
   }
@@ -408,6 +408,6 @@ proc.time() - ptm
 ParData %>%
 filter_all(any_vars(is.na(.))) #For some reason time of a different day are in there.
 
-#write.csv(ParData, "TestData.csv")
+#write.csv(ParData, "TestDataScale.csv")
 
 
