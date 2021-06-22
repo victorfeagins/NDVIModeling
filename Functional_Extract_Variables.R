@@ -9,11 +9,10 @@ Datadirectory = "Data/" #Folder where GOES data is
 Latiude = 32.457 #Can be a vector, in degrees 
 Longitude = -91.9743 #Can be a vector, in degrees
 numcores = 4 #For sequential put 1
-applyingoffset = FALSE #Do you want to apply the scalefactor and offset to variables in ncfiles
 
 #Output ----
 
-outputfilepath = "TestDataNoOffset.csv" #Name of file and path where want to be saved
+outputfilepath = "TestData.csv" #Name of file and path where want to be saved
 
 
 
@@ -242,7 +241,7 @@ x.index <- RawCoord$x.rad %>%
 # 
 # #It is vectorized
 
-Extract_Variable <- function(lat, long, NC_file, NC_infolist, applyingoffset = TRUE){
+Extract_Variable <- function(lat, long, NC_file, NC_infolist){
   #Telling the Channel will rename the variables in the output.
   
   index <- coords.to.index(lat, long, NC_infolist) #Grabs The index 
@@ -254,7 +253,7 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist, applyingoffset = T
     Outputname <-  "BCM"
   } else if (str_detect(filename, "L1b-RadC-M[\\d]C02_G16")){
     Varname <- "Rad"
-    Outputname <- "RadC02" 
+    Outputname <- "RadC02"
     
   } else if (str_detect(filename, "L1b-RadC-M[\\d]C03_G16")){
     Varname <- "Rad"
@@ -264,49 +263,27 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist, applyingoffset = T
   DataFlag = vector(mode = "numeric", length(lat))
 
 ### Applying Scale offset ----
-  if (applyingoffset == TRUE){
-    for (i in 1:length(lat)){
-      if (NC_file$var[[Varname]]$hasScaleFact){
-        Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i])) %>%  
-          subtract(NC_file$var[[Varname]]$addOffset) %>% 
-          divide_by(NC_file$var[[Varname]]$scaleFact)
-      } else {
-        Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))
-      }
-      
-      DataFlag[i] <- nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=index$y.index[i], X=index$x.index[i]))
-      if (Varname == "Rad"){
-        Kappa <-  ncvar_get(NC_file,"kappa0")
-      }
-    }
-  } else {
     for (i in 1:length(lat)){
       if (NC_file$var[[Varname]]$hasScaleFact){
         Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))
       } else {
         Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))
+        
       }
       
       DataFlag[i] <- nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=index$y.index[i], X=index$x.index[i]))
       if (Varname == "Rad"){
         Kappa <-  ncvar_get(NC_file,"kappa0")
+        Offset <- NC_file$var[[Varname]]$addOffset
+        ScaleFact <- NC_file$var[[Varname]]$scaleFact 
       }
     }
-  }
 
 #End of scalefactor code----------------------------------------
 
   
   Time = NC_infolist$Time
   
-  # Time <-  ncvar_get(NC_file,"t") %>%
-  #   na_if(-999) %>% 
-  #   as.POSIXct(origin = "2000-01-01 12:00:00", tz = "UTC") %>% 
-  #   round.POSIXt("secs")
-  # 
-  # if (is.na(Time)){
-  #   Time = NC_infolist$Time
-  # }
   
   Lat <- lat
   Long <-  long
@@ -317,13 +294,17 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist, applyingoffset = T
     return(list(Latitude = Lat, Longitude = Long, 
                 RadC02 = Value, KappaC02 = Kappa, 
                 Time = Time,
-                RadC02DQF = DataFlag) %>% 
+                RadC02DQF = DataFlag,
+                RadC02ScaleFactor = ScaleFact,
+                RadC02Offset = Offset) %>% 
       data.frame())
   } else if (Outputname == "RadC03"){
     return(list(Latitude = Lat, Longitude = Long, 
                 RadC03 = Value, KappaC03 = Kappa, 
                 Time = Time,
-                RadC03DQF = DataFlag) %>% 
+                RadC03DQF = DataFlag,
+                RadC03ScaleFactor = ScaleFact,
+                RadC03Offset = Offset) %>% 
              data.frame())
     
   } else if(Outputname == "BCM"){
@@ -343,10 +324,10 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist, applyingoffset = T
 # NC_info_cloud <- File_info(test)
 # Extract_Variable(Lat_LongDf$Lat, Lat_LongDf$Long, test, NC_info_cloud)
 
-Open_Extract_Value <- function(file, lat, long, applyingoffset = TRUE){
+Open_Extract_Value <- function(file, lat, long){
  NC_file <- nc_open(file)
  NC_info <- File_info(NC_file)
- FileRow<- Extract_Variable(lat,long,NC_file,NC_info, applyingoffset) %>% 
+ FileRow<- Extract_Variable(lat,long,NC_file,NC_info) %>% 
    data.frame()
  nc_close(NC_file)
  return(FileRow)
@@ -403,7 +384,7 @@ Open_Extract_Value <- function(file, lat, long, applyingoffset = TRUE){
 #   filter_all(any_vars(is.na(.))) #For some reason time of a different day are in there.
 
 
-Extract_Dataframe_P <- function(DataDirectory, lat, long, applyingoffset = TRUE){
+Extract_Dataframe_P <- function(DataDirectory, lat, long){
   #Eventually put in Time day as variable
   files = list.files(path=DataDirectory, full.names = TRUE, recursive=FALSE)
   
@@ -414,11 +395,11 @@ Extract_Dataframe_P <- function(DataDirectory, lat, long, applyingoffset = TRUE)
   CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC")
   
   
-  DataCh2<- future_map_dfr(Channel2files, Open_Extract_Value, lat = lat, long = long, applyingoffset = applyingoffset)
+  DataCh2<- future_map_dfr(Channel2files, Open_Extract_Value, lat = lat, long = long)
   
-  DataCh3<- future_map_dfr(Channel3files, Open_Extract_Value, lat = lat, long = long, applyingoffset = applyingoffset)
+  DataCh3<- future_map_dfr(Channel3files, Open_Extract_Value, lat = lat, long = long)
   
-  DataCloud<- future_map_dfr(CloudMask, Open_Extract_Value, lat = lat, long = long, applyingoffset = applyingoffset)
+  DataCloud<- future_map_dfr(CloudMask, Open_Extract_Value, lat = lat, long = long)
   
   FinalData <- merge(DataCh2,DataCh3, by = c("Time", "Latitude", "Longitude"), all = TRUE) %>%
     merge(DataCloud, by = c("Time", "Latitude", "Longitude"),all = TRUE)
@@ -433,7 +414,7 @@ plan(multisession, workers = numcores)
 
 ptm <- proc.time()
 
-ParData<- Extract_Dataframe_P(Datadirectory, Latiude, Longitude, applyingoffset)
+ParData<- Extract_Dataframe_P(Datadirectory, Latiude, Longitude)
 
 proc.time() - ptm
 
