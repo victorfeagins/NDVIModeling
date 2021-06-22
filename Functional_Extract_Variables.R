@@ -394,9 +394,11 @@ Extract_Dataframe_P <- function(DataDirectory, lat, long){
   return(FinalData)
 }
 
-plan("s")
+
 
 #options(mc.cores = 4)
+
+plan(multisession, workers = 4)
 
 ptm <- proc.time()
 
