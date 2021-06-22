@@ -408,3 +408,6 @@ proc.time() - ptm
 ParData %>%
 filter_all(any_vars(is.na(.))) #For some reason time of a different day are in there.
 
+#write.csv(ParData, "TestData.csv")
+
+
