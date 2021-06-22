@@ -3,6 +3,20 @@
 # Author: Victor Feagins
 # Description: Extracting from .nc files variables I need to do analysis in a functional manner
 
+#Input ----
+
+Datadirectory = "Data/" #Folder where GOES data is
+Latiude = 32.457 #Can be a vector, in degrees 
+Longitude = -91.9743 #Can be a vector, in degrees
+numcores = 4 #For sequential put 1
+applyingoffset = TRUE #Do you want to apply the scalefactor and offset to variables in ncfiles
+
+#Output ----
+
+outputfilepath = "TestData.csv" #Name of file and path where want to be saved
+
+
+
 ## Packages ----
 library(ncdf4) #Used to open .nc files
 library(ncdf4.helpers) #Used to extract variables by index 
@@ -168,11 +182,11 @@ coords.to.angle <- function(lat, long, NC_infolist){
   
   list(y.rad = y, x.rad = x)
 }
-## File Info ----
-filename = "Data/OR_ABI-L1b-RadC-M3C03_G16_s20172330622189_e20172330624562_c20172330625004.nc"
-NC_file <- nc_open(filename)
-
-NC_info <- File_info(NC_file)
+# ## File Info ----
+# filename = "Data/OR_ABI-L1b-RadC-M3C03_G16_s20172330622189_e20172330624562_c20172330625004.nc"
+# NC_file <- nc_open(filename)
+# 
+# NC_info <- File_info(NC_file)
 
 coords.to.index <- function(lat,long, NC_infolist){
   #Coords have to be in GRS80 and in radians
@@ -193,42 +207,42 @@ x.index <- RawCoord$x.rad %>%
 }
 
 
-testlatvector = c(29.425171, 42.360081)
-testlongvector = c(-98.494614, -71.058884)
-Lat_LongDf = data.frame(cbind(Lat = testlatvector, Long = testlongvector))
+# testlatvector = c(29.425171, 42.360081)
+# testlongvector = c(-98.494614, -71.058884)
+# Lat_LongDf = data.frame(cbind(Lat = testlatvector, Long = testlongvector))
 
-#Testing vectorized deg2rad ----
-for (i in 1:nrow(Lat_LongDf)){
-  print("Lat")
-  print(deg2rad(Lat_LongDf$Lat[i]))
-  print("Long")
-  print(deg2rad(Lat_LongDf$Long[i]))
-}
-deg2rad(Lat_LongDf$Lat)
-deg2rad(Lat_LongDf$Long)
-#Is is vectorized
+# #Testing vectorized deg2rad ----
+# for (i in 1:nrow(Lat_LongDf)){
+#   print("Lat")
+#   print(deg2rad(Lat_LongDf$Lat[i]))
+#   print("Long")
+#   print(deg2rad(Lat_LongDf$Long[i]))
+# }
+# deg2rad(Lat_LongDf$Lat)
+# deg2rad(Lat_LongDf$Long)
+# #Is is vectorized
+# 
+# #Testing Vector Coords.to.angle ----
+# for (i in 1:nrow(Lat_LongDf)){
+#   print(coords.to.angle(Lat_LongDf$Lat[i], Lat_LongDf$Long[i], NC_info))
+# }
 
-#Testing Vector Coords.to.angle ----
-for (i in 1:nrow(Lat_LongDf)){
-  print(coords.to.angle(Lat_LongDf$Lat[i], Lat_LongDf$Long[i], NC_info))
-}
-
-coords.to.angle(Lat_LongDf$Lat, Lat_LongDf$Long, NC_info)
-
-
-#It is vectorized
-
-
-# Testing vector Coords.to.index ----
-for (i in 1:nrow(Lat_LongDf)){
-  print(coords.to.index(Lat_LongDf$Lat[i], Lat_LongDf$Long[i], NC_info))
-}
-
-coords.to.index(Lat_LongDf$Lat, Lat_LongDf$Long, NC_info)
+# coords.to.angle(Lat_LongDf$Lat, Lat_LongDf$Long, NC_info)
+# 
 
 #It is vectorized
 
-Extract_Variable <- function(lat, long, NC_file, NC_infolist){
+# 
+# # Testing vector Coords.to.index ----
+# for (i in 1:nrow(Lat_LongDf)){
+#   print(coords.to.index(Lat_LongDf$Lat[i], Lat_LongDf$Long[i], NC_info))
+# }
+# 
+# coords.to.index(Lat_LongDf$Lat, Lat_LongDf$Long, NC_info)
+# 
+# #It is vectorized
+
+Extract_Variable <- function(lat, long, NC_file, NC_infolist, applyingoffset = TRUE){
   #Telling the Channel will rename the variables in the output.
   
   index <- coords.to.index(lat, long, NC_infolist) #Grabs The index 
@@ -246,26 +260,44 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
     Varname <- "Rad"
     Outputname <- "RadC03"
   }
-Value = vector(mode = "numeric", length(lat))
-DataFlag = vector(mode = "numeric", length(lat))
-for (i in 1:length(lat)){
-  if (NC_file$var[[Varname]]$hasScaleFact){
-    Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))     Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i])) %>% 
-       subtract(NC_file$var[[Varname]]$addOffset) %>% 
-       divide_by(NC_file$var[[Varname]]$scaleFact)
+  Value = vector(mode = "numeric", length(lat))
+  DataFlag = vector(mode = "numeric", length(lat))
+
+### Applying Scale offset ----
+  if (applyingoffset == TRUE){
+    for (i in 1:length(lat)){
+      if (NC_file$var[[Varname]]$hasScaleFact){
+        Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i])) %>%  
+          subtract(NC_file$var[[Varname]]$addOffset) %>% 
+          divide_by(NC_file$var[[Varname]]$scaleFact)
+      } else {
+        Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))
+      }
+      
+      DataFlag[i] <- nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=index$y.index[i], X=index$x.index[i]))
+      if (Varname == "Rad"){
+        Kappa <-  ncvar_get(NC_file,"kappa0")
+      }
+    }
   } else {
-    Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))
+    for (i in 1:length(lat)){
+      if (NC_file$var[[Varname]]$hasScaleFact){
+        Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))
+      } else {
+        Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))
+      }
+      
+      DataFlag[i] <- nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=index$y.index[i], X=index$x.index[i]))
+      if (Varname == "Rad"){
+        Kappa <-  ncvar_get(NC_file,"kappa0")
+      }
+    }
   }
-  
-  DataFlag[i] <- nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=index$y.index[i], X=index$x.index[i]))
-  if (Varname == "Rad"){
-    Kappa <-  ncvar_get(NC_file,"kappa0")
-  }
-}
 
+#End of scalefactor code----------------------------------------
 
   
-Time = NC_infolist$Time
+  Time = NC_infolist$Time
   
   # Time <-  ncvar_get(NC_file,"t") %>%
   #   na_if(-999) %>% 
@@ -302,34 +334,34 @@ Time = NC_infolist$Time
       data.frame()}
 }
 
+# 
+# #Testing Extract_Variables ----
+# Extract_Variable(Lat_LongDf$Lat, Lat_LongDf$Long, NC_file, NC_info)
+# Extract_Variable(Lat_LongDf$Lat[1], Lat_LongDf$Long[2],NC_file, NC_info)
+# 
+# test <- nc_open("Data/OR_ABI-L2-ACMC-M4_G16_s20172330155227_e20172330155227_c20172330201262.nc")
+# NC_info_cloud <- File_info(test)
+# Extract_Variable(Lat_LongDf$Lat, Lat_LongDf$Long, test, NC_info_cloud)
 
-#Testing Extract_Variables ----
-Extract_Variable(Lat_LongDf$Lat, Lat_LongDf$Long, NC_file, NC_info)
-Extract_Variable(Lat_LongDf$Lat[1], Lat_LongDf$Long[2],NC_file, NC_info)
-
-test <- nc_open("Data/OR_ABI-L2-ACMC-M4_G16_s20172330155227_e20172330155227_c20172330201262.nc")
-NC_info_cloud <- File_info(test)
-Extract_Variable(Lat_LongDf$Lat, Lat_LongDf$Long, test, NC_info_cloud)
-
-Open_Extract_Value <- function(file, lat, long){
+Open_Extract_Value <- function(file, lat, long, applyingoffset = TRUE){
  NC_file <- nc_open(file)
  NC_info <- File_info(NC_file)
- FileRow<- Extract_Variable(lat,long,NC_file,NC_info) %>% 
+ FileRow<- Extract_Variable(lat,long,NC_file,NC_info, applyingoffset) %>% 
    data.frame()
  nc_close(NC_file)
  return(FileRow)
 }
-#Testing Open_Extract_Value ----
-Open_Extract_Value("Data/OR_ABI-L1b-RadC-M3C02_G16_s20172330202189_e20172330204562_c20172330205000.nc",
-                   Lat_LongDf$Lat,
-                   Lat_LongDf$Long)
-Open_Extract_Value("Data/OR_ABI-L1b-RadC-M3C03_G16_s20172330202189_e20172330204562_c20172330205008.nc",
-                   Lat_LongDf$Lat,
-                   Lat_LongDf$Long)
-
-Open_Extract_Value("Data/OR_ABI-L2-ACMC-M4_G16_s20172330105227_e20172330105227_c20172330111256.nc",
-                   Lat_LongDf$Lat,
-                   Lat_LongDf$Long)
+# #Testing Open_Extract_Value ----
+# Open_Extract_Value("Data/OR_ABI-L1b-RadC-M3C02_G16_s20172330202189_e20172330204562_c20172330205000.nc",
+#                    Lat_LongDf$Lat,
+#                    Lat_LongDf$Long)
+# Open_Extract_Value("Data/OR_ABI-L1b-RadC-M3C03_G16_s20172330202189_e20172330204562_c20172330205008.nc",
+#                    Lat_LongDf$Lat,
+#                    Lat_LongDf$Long)
+# 
+# Open_Extract_Value("Data/OR_ABI-L2-ACMC-M4_G16_s20172330105227_e20172330105227_c20172330111256.nc",
+#                    Lat_LongDf$Lat,
+#                    Lat_LongDf$Long)
 
 # Extract_Dataframe <- function(DataDirectory, lat, long){
 #   #Eventually put in Time
@@ -371,8 +403,8 @@ Open_Extract_Value("Data/OR_ABI-L2-ACMC-M4_G16_s20172330105227_e20172330105227_c
 #   filter_all(any_vars(is.na(.))) #For some reason time of a different day are in there.
 
 
-Extract_Dataframe_P <- function(DataDirectory, lat, long){
-  #Eventually put in Time
+Extract_Dataframe_P <- function(DataDirectory, lat, long, applyingoffset = TRUE){
+  #Eventually put in Time day as variable
   files = list.files(path=DataDirectory, full.names = TRUE, recursive=FALSE)
   
   Channel2files <- str_subset(files, "L1b-RadC-M[\\d]C02_G16")
@@ -394,20 +426,22 @@ Extract_Dataframe_P <- function(DataDirectory, lat, long){
   return(FinalData)
 }
 
+### Using the functions  ----
 
-
-plan(multisession, workers = 4)
+plan(multisession, workers = numcores)
 #plan(sequential)
 
 ptm <- proc.time()
 
-ParData<- Extract_Dataframe_P("Data", 32.457, -91.9743)
+ParData<- Extract_Dataframe_P(Datadirectory, Latiude, Longitude, applyingoffset)
 
 proc.time() - ptm
 
-ParData %>%
-filter_all(any_vars(is.na(.))) #For some reason time of a different day are in there.
 
-#write.csv(ParData, "TestDataScale.csv")
+write.csv(ParData, outputfilepath)
+
+# ParData %>%
+# filter_all(any_vars(is.na(.))) #For some reason time of a different day are in there.
+
 
 
