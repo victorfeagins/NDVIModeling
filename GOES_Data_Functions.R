@@ -184,7 +184,7 @@ coords.to.index <- function(lat,long, NC_infolist){
 
 
 
-Extract_Variable <- function(lat, long, NC_file, NC_infolist){
+Extract_Variable <- function(lat, long, NC_file, NC_infolist, average = FALSE){
   #Opens files and extracts values important for NDVI calculations
   #Ideally this function could be more flexiable but for now it is fine
   #Returns a Dataframe
@@ -209,7 +209,9 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
   DataFlag = vector(mode = "numeric", length(lat))
   
   ### Applying Scale offset ----
-  
+  if (average == FALSE | Outputname != "RadC02" ){
+    
+ 
   for (i in 1:length(lat)){
     #For every lat and longitude take the value of the index
     if (NC_file$var[[Varname]]$hasScaleFact){
@@ -225,7 +227,30 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
       Offset <- NC_file$var[[Varname]]$addOffset
       ScaleFact <- NC_file$var[[Varname]]$scaleFact 
     }
+  }}
+  
+  if(average == TRUE){
+    for (i in 1:length(lat)){
+    y.window =  (index$y.index[i]-1):(index$y.index[i]+1)
+    x.window = (index$x.index[i]-1):(index$x.index[i]+1)
+    
+    
+    if (NC_file$var[[Varname]]$hasScaleFact){
+      Value[i] <- mean(nc.get.var.subset.by.axes(NC_file, Varname, list(Y=y.window, X=x.window)))
+    } else {
+      Value[i] <- mean(nc.get.var.subset.by.axes(NC_file, Varname, list(Y=y.window, X=x.window)))
+      
+    }
+    
+    DataFlag[i] <- mean(nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=y.window, X=x.window)))
+    }
+    if (Varname == "Rad"){
+      Kappa <-  ncvar_get(NC_file,"kappa0")
+      Offset <- NC_file$var[[Varname]]$addOffset
+      ScaleFact <- NC_file$var[[Varname]]$scaleFact 
+    }
   }
+  
   
   #End of scalefactor code----------------------------------------
   
@@ -264,13 +289,13 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
 }
 
 
-Open_Extract_Value <- function(file, lat, long){
+Open_Extract_Value <- function(file, lat, long, average = FALSE){
   #Opens and closes the files after getting info
   #Lat and Long can be vectors
   #Returns dataframe of row(s) of data per lat and long
   NC_file <- nc_open(file)
   NC_info <- File_info(NC_file)
-  FileRow<- Extract_Variable(lat,long,NC_file,NC_info) %>% 
+  FileRow<- Extract_Variable(lat,long,NC_file,NC_info, average) %>% 
     data.frame()
   nc_close(NC_file)
   return(FileRow)
@@ -278,7 +303,7 @@ Open_Extract_Value <- function(file, lat, long){
 
 
 
-Extract_Dataframe_P <- function(DataDirectory, lat, long){
+Extract_Dataframe_P <- function(DataDirectory, lat, long, average = FALSE){
   #Eventually put in Time day as variable to filter files day
   #Uses all the functions to create large dataframe containing info on all the 
   #Files in the datadirectory
@@ -294,11 +319,11 @@ Extract_Dataframe_P <- function(DataDirectory, lat, long){
   CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC")
   
   
-  DataCh2<- future_map_dfr(Channel2files, Open_Extract_Value, lat = lat, long = long)
+  DataCh2<- future_map_dfr(Channel2files, Open_Extract_Value, lat = lat, long = long, average = average)
   
-  DataCh3<- future_map_dfr(Channel3files, Open_Extract_Value, lat = lat, long = long)
+  DataCh3<- future_map_dfr(Channel3files, Open_Extract_Value, lat = lat, long = long, average = average)
   
-  DataCloud<- future_map_dfr(CloudMask, Open_Extract_Value, lat = lat, long = long)
+  DataCloud<- future_map_dfr(CloudMask, Open_Extract_Value, lat = lat, long = long, average = average)
   
   FinalData <- merge(DataCh2,DataCh3, by = c("Time", "Latitude", "Longitude"), all = TRUE) %>%
     merge(DataCloud, by = c("Time", "Latitude", "Longitude"),all = TRUE)
