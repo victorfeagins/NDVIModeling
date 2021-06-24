@@ -184,7 +184,7 @@ coords.to.index <- function(lat,long, NC_infolist){
 
 
 
-Extract_Variable <- function(lat, long, NC_file, NC_infolist){
+Extract_Variable <- function(lat, long, NC_file, NC_infolist, average = FALSE){
   #Opens files and extracts values important for NDVI calculations
   #Ideally this function could be more flexiable but for now it is fine
   #Returns a Dataframe
@@ -195,8 +195,8 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
   filename <-  NC_file$filename 
   
   if(str_detect(filename, "OR_ABI-L2-ACMC")){
-    Varname <-  "BCM"
-    Outputname <-  "BCM"
+    Varname <-  "ACM"
+    Outputname <-  "ACM"
   } else if (str_detect(filename, "L1b-RadC-M[\\d]C02_G16")){
     Varname <- "Rad"
     Outputname <- "RadC02"
@@ -209,7 +209,9 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
   DataFlag = vector(mode = "numeric", length(lat))
   
   ### Applying Scale offset ----
-  
+  if (average == FALSE | Outputname != "RadC02" ){
+    
+ 
   for (i in 1:length(lat)){
     #For every lat and longitude take the value of the index
     if (NC_file$var[[Varname]]$hasScaleFact){
@@ -225,7 +227,24 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
       Offset <- NC_file$var[[Varname]]$addOffset
       ScaleFact <- NC_file$var[[Varname]]$scaleFact 
     }
+  }} else if(average == TRUE){
+    y.window =  index$y.index[i]-1 :  index$y.index[i]+1
+    x.window = index$x.index[i]-1 :  index$x.index[i]+1
+    if (NC_file$var[[Varname]]$hasScaleFact){
+      Value[i] <- mean(nc.get.var.subset.by.axes(NC_file, Varname, list(Y=y.window, X=x.window)))
+    } else {
+      Value[i] <- mean(nc.get.var.subset.by.axes(NC_file, Varname, list(Y=y.window, X=x.window)))
+      
+    }
+    
+    DataFlag[i] <- mean(nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=y.window, X=x.window)))
+    if (Varname == "Rad"){
+      Kappa <-  ncvar_get(NC_file,"kappa0")
+      Offset <- NC_file$var[[Varname]]$addOffset
+      ScaleFact <- NC_file$var[[Varname]]$scaleFact 
+    }
   }
+  
   
   #End of scalefactor code----------------------------------------
   
@@ -255,11 +274,11 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist){
                 RadC03Offset = Offset) %>% 
              data.frame())
     
-  } else if(Outputname == "BCM"){
+  } else if(Outputname == "ACM"){
     return(list(Latitude = Lat, Longitude = Long, 
-                BCM = Value,
+                ACM = Value,
                 Time = Time,
-                BCMDQF = DataFlag)) %>% 
+                ACMDQF = DataFlag)) %>% 
       data.frame()}
 }
 
