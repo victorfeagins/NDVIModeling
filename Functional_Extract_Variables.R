@@ -5,14 +5,15 @@
 
 #Input ----
 
-Datadirectory = "Data/" #Folder where GOES data is
+#Datadirectory = "Data/" #Folder where GOES data is
+Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/"
 Latiude = 32.457 #Can be a vector, in degrees 
 Longitude = -91.9743 #Can be a vector, in degrees
-numcores = 4 #For sequential put 1
+numcores = 9 #For sequential put 1
 
 #Output ----
 
-outputfilepath = "TestData.csv" #Name of file and path where want to be saved
+outputfilepath = "BigData.csv" #Name of file and path where want to be saved
 
 
 
