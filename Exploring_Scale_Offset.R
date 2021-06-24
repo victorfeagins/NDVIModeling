@@ -7,7 +7,7 @@ library(scales)
 
 df.small <- read.csv("TestData.csv")
 
-
+data.function <-  read.csv("GOES_NDVI_DiurnalRussellSage_2017233.csv") #Same Day as to df.small
 df.big <-  read.csv("BigData.csv")
 
 NDVICal <- function(R2,R3){
@@ -30,7 +30,6 @@ df.small <-  df.small %>%
 
 
 
-
 suntimes<- df.small %$% 
   getSunlightTimes(date = as.Date(Time[2]),
                             lat = Latitude[2],
@@ -40,6 +39,8 @@ suntimes<- df.small %$%
 
 Daytime.small <-  df.small %>% 
   filter(Time > suntimes$nauticalDawn, Time < suntimes$nauticalDusk)
+
+#Data from package 
 
 
 # Comparing variables with itself
@@ -57,7 +58,7 @@ Daytime.small %>%
 
 
 Daytime.small %>% 
-  select(Time, starts_with("R3"))%>% 
+  select(Time, starts_with("R3"), RadC03)%>% 
   reshape2::melt("Time") %>%
   mutate(Time = as.POSIXct(Time)) %>% 
   ggplot(mapping = aes(x = Time , y = value)) +
