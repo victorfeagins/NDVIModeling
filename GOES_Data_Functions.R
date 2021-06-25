@@ -184,6 +184,84 @@ coords.to.index <- function(lat,long, NC_infolist){
 
 
 
+index.to.angle <-  function(x.index, y.index, NC_infolist){
+  y.angle <-  y.index %>% 
+    multiply_by(NC_infolist$y.scale_factor) %>% 
+    add(NC_infolist$y.offset)
+  
+  x.angle <- x.index %>% 
+    multiply_by(NC_infolist$x.scale_factor) %>% 
+    add(NC_infolist$x.offset)
+  list(y.angle = y.angle, x.angle = x.angle)
+}
+
+
+index.to.coord <- function(y.index, x.index, NC_infolist){
+  Angles = index.to.angle(y.index, x.index, NC_infolist)
+  y = Angles$y.angle
+  x = Angles$x.angle
+  
+  
+  a <- y %>% 
+    sin() %>% 
+    raise_to_power(2) %>% 
+    multiply_by((NC_infolist$r.eq/NC_infolist$r.pol)^2) %>% 
+    add(cos(y)^2) %>% 
+    multiply_by(cos(x)^2) %>% 
+    add(sin(x)^2)
+  
+  b <- -2 %>% 
+    multiply_by(NC_infolist$H) %>% 
+    multiply_by(cos(x)) %>% 
+    multiply_by(cos(y))
+  
+  c <-  H %>% 
+    raise_to_power(2) %>% 
+    subtract(NC_infolist$r.eq^2)
+  
+  r.s <- a %>% 
+    multiply_by(c) %>% 
+    multiply_by(-4) %>% 
+    add(b^2) %>% 
+    raise_to_power(1/2) %>% 
+    multiply_by(-1) %>% 
+    add(-b) %>% 
+    divide_by(2*a)
+  
+  s.x <- r.s %>% 
+    multiply_by(cos(x)) %>% 
+    multiply_by(cos(y))
+  
+  s.y <- -r.s %>% 
+    multiply_by(sin(x))
+  
+  s.z <- r.s %>% 
+    multiply_by(cos(x)) %>% 
+    multiply_by(sin(y))
+  
+  
+  Latitude <-  H %>% 
+    subtract(s.x) %>% 
+    raise_to_power(2) %>% 
+    add(s.y^2) %>% 
+    raise_to_power(-1/2) %>% 
+    multiply_by(s.z) %>% 
+    multiply_by((NC_infolist$r.eq/NC_infolist$r.pol)^2) %>% 
+    atan()
+  
+  
+  Longitude <- s.y %>% 
+    divide_by(H - s.x) %>% 
+    atan() %>% 
+    multiply_by(-1) %>% 
+    add(NC_infolist$lambda.o)
+  
+  
+  return(list(Latitude, Longitude))
+  
+}
+
+
 Extract_Variable <- function(lat, long, NC_file, NC_infolist, average = FALSE){
   #Opens files and extracts values important for NDVI calculations
   #Ideally this function could be more flexiable but for now it is fine
