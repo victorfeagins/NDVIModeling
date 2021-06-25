@@ -231,8 +231,10 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist, average = FALSE){
   
   if(average == TRUE){
     for (i in 1:length(lat)){
-    y.window =  (index$y.index[i]-1):(index$y.index[i]+1)
-    x.window = (index$x.index[i]-1):(index$x.index[i]+1)
+    # y.window =  (index$y.index[i]-1):(index$y.index[i]+1)
+    # x.window = (index$x.index[i]-1):(index$x.index[i]+1)
+    y.window =  (index$y.index[i]):(index$y.index[i]+1)
+    x.window = (index$x.index[i]):(index$x.index[i]+1)
     
     
     if (NC_file$var[[Varname]]$hasScaleFact){
