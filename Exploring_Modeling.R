@@ -41,36 +41,22 @@ NDVIQuality <- function(dataframewithNDVI){
 
 
 # Data ----
-df.small <- read.csv("TestData.csv")
 
 df.avg <-  read.csv("TestDataAvg.csv")
 
-df.avg.fun <-  read.csv("TestDataAvgFunction.csv")
-
 GOES_NDVI_Data <- read.csv("GOES_NDVI_DiurnalRussellSage_2017233.csv")
-
-df.small <- df.small %>% #Selecting only one day
-  mutate(Time = as_datetime(Time)) %>% 
-  filter(day(Time) == 21)
 
 df.avg <- df.avg %>% #Selecting only one day
   mutate(Time = as_datetime(Time)) %>% 
   filter(day(Time) == 21)
 
-df.avg.fun <- df.avg.fun %>% #Selecting only one day
-  mutate(Time = as_datetime(Time)) %>% 
-  filter(day(Time) == 21)
+
 
 
 #Cleaning Data ----
-df.small.model <-  NDVICreate(df.small) %>% 
-  NDVIQuality()
 
-df.avg.model <-  NDVICreate(df.avg) %>% 
-  NDVIQuality()
-
-df.avg.fun.raw <- NDVICreate(df.avg.fun) 
-df.avg.fun.model <- df.avg.fun.raw %>% 
+df.avg.model.raw <-  NDVICreate(df.avg)
+df.avg.model <- df.avg.model.raw %>% 
   NDVIQuality()
 
 GOES_NDVI_Data <- GOES_NDVI_Data %>% 
@@ -84,22 +70,15 @@ GOES_NDVI_Data<- GOES_NDVI_Data %>%
 
 #Ploting Data ----
 
-df.small.model %$%
-  plot(Time, NDVI, main = "Extract_Variable function")
-
-
+df.avg.model.raw %$%
+  plot(Time, NDVI)
 df.avg.model %$%
   plot(Time, NDVI, main = "Extract_Variable function: R2 Averaged")
-
-df.avg.fun.model %$%
-  plot(Time, NDVI, main = "Extract_Variable function: R2 Averaged SmallWindow")
 
 
 GOES_NDVI_Data %$%
   plot(Time, NDVI, main = "Diurnal Functions")
 
-df.small.model %$%
-  summary(NDVI)
 
 GOES_NDVI_Data %$%
   summary(NDVI)
@@ -107,8 +86,7 @@ GOES_NDVI_Data %$%
 df.avg.model %$%
   summary(NDVI)
 
-df.avg.fun.model %$%
-  summary(NDVI)
+
 
 #Comparing Raw Data to GOES_NDVI_Data ----
 
