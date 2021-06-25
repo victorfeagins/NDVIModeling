@@ -184,7 +184,7 @@ coords.to.index <- function(lat,long, NC_infolist){
 
 
 
-index.to.angle <-  function(x.index, y.index, NC_infolist){
+index.to.angle <-  function(y.index,x.index, NC_infolist){
   y.angle <-  y.index %>% 
     multiply_by(NC_infolist$y.scale_factor) %>% 
     add(NC_infolist$y.offset)
@@ -215,7 +215,7 @@ index.to.coord <- function(y.index, x.index, NC_infolist){
     multiply_by(cos(x)) %>% 
     multiply_by(cos(y))
   
-  c <-  H %>% 
+  c <-  NC_infolist$H %>% 
     raise_to_power(2) %>% 
     subtract(NC_infolist$r.eq^2)
   
@@ -240,24 +240,27 @@ index.to.coord <- function(y.index, x.index, NC_infolist){
     multiply_by(sin(y))
   
   
-  Latitude <-  H %>% 
+  Latitude <-  NC_infolist$H %>% 
     subtract(s.x) %>% 
     raise_to_power(2) %>% 
     add(s.y^2) %>% 
     raise_to_power(-1/2) %>% 
     multiply_by(s.z) %>% 
     multiply_by((NC_infolist$r.eq/NC_infolist$r.pol)^2) %>% 
-    atan()
+    atan() %>% 
+    rad2deg()
   
   
   Longitude <- s.y %>% 
-    divide_by(H - s.x) %>% 
+    divide_by(NC_infolist$H - s.x) %>% 
     atan() %>% 
     multiply_by(-1) %>% 
-    add(NC_infolist$lambda.o)
+    add(NC_infolist$lambda.o) %>% 
+    rad2deg()
   
   
-  return(list(Latitude, Longitude))
+  
+  return(list(Latitude = Latitude, Longitude = Longitude))
   
 }
 
