@@ -11,7 +11,7 @@ library(GOESDiurnalNDVI)
 
 # Functions ----
 NDVICreate <- function(dataframe){
-
+  
   output <- dataframe %>% 
     mutate(R2 = RadC02 * KappaC02,
            R3 = RadC03 * KappaC03,
@@ -55,8 +55,8 @@ df.avg <- df.avg %>% #Selecting only one day
 
 #Cleaning Data ----
 
-df.avg.model.raw <-  NDVICreate(df.avg)
-df.avg.model <- df.avg.model.raw %>% 
+df.avg.model <- df.avg %>%
+  NDVICreate() %>% 
   NDVIQuality()
 
 GOES_NDVI_Data <- GOES_NDVI_Data %>% 
@@ -68,10 +68,9 @@ GOES_NDVI_Data<- GOES_NDVI_Data %>%
   filter(!is.na(NDVI))
 
 
-#Ploting Data ----
+#Plotting Data ----
 
-df.avg.model.raw %$%
-  plot(Time, NDVI)
+
 df.avg.model %$%
   plot(Time, NDVI, main = "Extract_Variable function: R2 Averaged")
 
@@ -87,23 +86,26 @@ df.avg.model %$%
   summary(NDVI)
 
 
-
-#Comparing Raw Data to GOES_NDVI_Data ----
-
-suntimesinterval<- df.avg.fun.raw %$% 
-  getSunlightTimes(date = as.Date(Time[1]),
-                   lat = Latitude[1],
-                   lon = Longitude[1],
-                   keep=c("nauticalDawn","nauticalDusk"), tz = "UTC") %$%
-  interval(nauticalDawn,nauticalDusk, "UTC") 
-
-df.avg.fun.raw %>% 
-  filter(Time %within% suntimesinterval,
-         NDVI > 0) %>% 
-  mutate(Time = hour(with_tz(Time, tzone = "EDT")) + minute(with_tz(Time, tzone = "EDT"))/60)%$%
-  plot(Time,NDVI)
-
-GOES_NDVI_Data %$%
-  plot(Time, NDVI, main = "Diurnal Functions")
+#Baysian Modeling
+df.avg.model %$%
+  hour(Time)
 
 
+df.avg.model %$%
+  with_tz(Time, "America/New_York") %>% 
+  hour()
+
+df.model.vectors <- df.avg.model %>% 
+  select(Time, NDVI) %>% 
+  mutate(Time = hour(Time) + minute(Time)/60) %>% 
+  rename(x = Time, y = NDVI) %$%
+  list(x = x, y = y)
+
+
+j.model = createDiurnalModel("Test", df.model.vectors)
+
+ptm <- proc.time()
+var.burn <- runMCMC_Model(j.model=j.model,variableNames=c("a","c","k","prec"),
+                          baseNum=20000,iterSize =10000)
+
+(Time<- proc.time() - ptm)
