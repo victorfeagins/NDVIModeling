@@ -2,7 +2,7 @@
 source("GOES_Data_Functions.R")
 library(GOESDiurnalNDVI)
 
-Latiude = 32.457 
+Latitude = 32.457 
 Longitude = -91.9743 
 
 
@@ -15,12 +15,12 @@ file = "Data/OR_ABI-L1b-RadC-M3C02_G16_s20172330202189_e20172330204562_c20172330
 NC_File <- nc_open(file)
 NC_info <- File_info(NC_File)
 
-coords.to.angle(Latiude, Longitude, NC_info)
+coords.to.angle(Latitude, Longitude, NC_info)
 
-Ch2.index<- coords.to.index(Latiude, Longitude, NC_info)
+Ch2.index<- coords.to.index(Latitude, Longitude, NC_info)
 
 
-Lat.rad = deg2rad(Latiude)
+Lat.rad = deg2rad(Latitude)
 
 Long.rad = deg2rad(Longitude)
 
@@ -71,6 +71,13 @@ coords.to.index(Latiude, Longitude, NC_info)
 
 getABI_Index(Lat.rad, Long.rad, "OLD") %>% 
   getDataIndex("ACM", "OLD")
+
+
+
+
+#Testihg out new functions
+
+
 
 
 nc_close(NC_File)
