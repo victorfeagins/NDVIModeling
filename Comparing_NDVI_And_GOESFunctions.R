@@ -28,7 +28,13 @@ getABI_Index(Lat.rad, Long.rad, "OLD") %>%
   getDataIndex(2, "OLD")
 
 
+## Subset index vs total index
 
+R2 <- ncvar_get(NC_File, "Rad")
+R2[Ch2.index$y.index, Ch2.index$x.index]
+
+nc.get.var.subset.by.axes(NC_File, "Rad", list(X=Ch2.index$y.index, Y=Ch2.index$x.index))
+nc.get.var.subset.by.axes(NC_File, "Rad", list(X=Ch2.index$x.index, Y=Ch2.index$y.index))
 
 
 
