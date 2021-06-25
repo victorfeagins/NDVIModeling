@@ -32,5 +32,5 @@ df = Extract_Dataframe_P(Datadirectory, Latiude, Longitude, average = TRUE)
 #   data.frame()
 # nc_close(NC_file)
 
-write.csv(df, "TestDataAvg.csv")
+write.csv(df, "TestDataAvgFunction.csv")
 

@@ -53,10 +53,15 @@ Extract_Variable(Latiude, Longitude, NC_File, NC_info, average = TRUE)
 #Compare with extract
 x.window = Ch2.index$x.index:(Ch2.index$x.index+1)
 
-mean(R2[Ch2.index$y.index:(Ch2.index$y.index+1), Ch2.index$x.index:(Ch2.index$x.index+1)])
+mean(R2[Ch2.index$y.index[1]:(Ch2.index$y.index[1]+1), Ch2.index$x.index[1]:(Ch2.index$x.index[1]+1)])
 
 #Using function to extract all the data
+numcores = 4 #For sequential put 1
 
+plan(multisession, workers = numcores)
+
+Datadirectory= "Data"
+df <-  Extract_Dataframe_P(Datadirectory, Latiude, Longitude, average = TRUE)
 
 
 
