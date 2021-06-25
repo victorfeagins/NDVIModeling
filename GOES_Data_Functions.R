@@ -231,18 +231,21 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist, average = FALSE){
   
   if(average == TRUE){
     for (i in 1:length(lat)){
-    y.window =  (index$y.index[i]-1):(index$y.index[i]+1)
-    x.window = (index$x.index[i]-1):(index$x.index[i]+1)
+    # y.window =  (index$y.index[i]-1):(index$y.index[i]+1)
+    # x.window = (index$x.index[i]-1):(index$x.index[i]+1)
+    
+    y.window =  (index$y.index[i]):(index$y.index[i]+1)
+    x.window = (index$x.index[i]):(index$x.index[i]+1)
     
     
     if (NC_file$var[[Varname]]$hasScaleFact){
-      Value[i] <- mean(nc.get.var.subset.by.axes(NC_file, Varname, list(Y=y.window, X=x.window)))
+      Value[i] <- mean(nc.get.var.subset.by.axes(NC_file, Varname, list(X=y.window, Y=x.window)))
     } else {
-      Value[i] <- mean(nc.get.var.subset.by.axes(NC_file, Varname, list(Y=y.window, X=x.window)))
+      Value[i] <- mean(nc.get.var.subset.by.axes(NC_file, Varname, list(X=y.window, Y=x.window)))
       
     }
     
-    DataFlag[i] <- mean(nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=y.window, X=x.window)))
+    DataFlag[i] <- mean(nc.get.var.subset.by.axes(NC_file, "DQF", list(X=y.window, Y=x.window)))
     }
     if (Varname == "Rad"){
       Kappa <-  ncvar_get(NC_file,"kappa0")

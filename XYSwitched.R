@@ -47,6 +47,17 @@ source("GOES_Data_Functions.R")
 Extract_Variable(Latiude, Longitude, NC_File, NC_info)
 
 
+Extract_Variable(Latiude, Longitude, NC_File, NC_info, average = TRUE)
+
+
+#Compare with extract
+x.window = Ch2.index$x.index:(Ch2.index$x.index+1)
+
+mean(R2[Ch2.index$y.index:(Ch2.index$y.index+1), Ch2.index$x.index:(Ch2.index$x.index+1)])
+
+#Using function to extract all the data
+
+
 
 
 
