@@ -215,13 +215,13 @@ Extract_Variable <- function(lat, long, NC_file, NC_infolist, average = FALSE){
   for (i in 1:length(lat)){
     #For every lat and longitude take the value of the index
     if (NC_file$var[[Varname]]$hasScaleFact){
-      Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))
+      Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(X=index$y.index[i], Y=index$x.index[i]))
     } else {
-      Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(Y=index$y.index[i], X=index$x.index[i]))
+      Value[i] <- nc.get.var.subset.by.axes(NC_file, Varname, list(X=index$y.index[i], Y=index$x.index[i]))
       
     }
     
-    DataFlag[i] <- nc.get.var.subset.by.axes(NC_file, "DQF", list(Y=index$y.index[i], X=index$x.index[i]))
+    DataFlag[i] <- nc.get.var.subset.by.axes(NC_file, "DQF", list(X=index$y.index[i], Y=index$x.index[i]))
     if (Varname == "Rad"){
       Kappa <-  ncvar_get(NC_file,"kappa0")
       Offset <- NC_file$var[[Varname]]$addOffset
