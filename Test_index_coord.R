@@ -59,3 +59,8 @@ coords.to.angle(Latitude, Longitude, NC_info)
 index.to.coord(Index$y.index, Index$x.index, NC_info)
 
 index.to.angle(Index$y.index, Index$x.index, NC_info)
+
+
+index.to.coord(Index$x.index,Index$y.index, NC_info)
+
+nc_close(NC_File)
