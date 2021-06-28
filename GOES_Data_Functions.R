@@ -394,12 +394,12 @@ Extract_Dataframe_P <- function(DataDirectory, lat, long, dates, average = FALSE
   #Outside of this function set a future::plan
   
   days.request <- dates %>% #day of year from dates vector
-    strftime(test, format = "%j")
+    strftime(test, format = "%Y%j")
   
   files = list.files(path=DataDirectory, full.names = TRUE, recursive=FALSE) #all files in directory
   files.days <- files %>%  #All the dayofyears of the files
     str_extract("_s.+") %>% 
-    str_sub(7,9)
+    str_sub(3,9)
   
   files.request <- files[files.days %in% days.request] #files that match day request
   
