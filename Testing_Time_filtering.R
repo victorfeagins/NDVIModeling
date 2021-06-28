@@ -1,4 +1,3 @@
-library(lubridate)
 library(stringr)
 
 
@@ -42,4 +41,10 @@ head(Channel2time_day)
 #Date to 365 Day ----
 (test = as.Date("2020-02-01") %>% 
   strftime(test, format = "%j"))
+
+# Trying Interval ----
+seq(as.Date("2011-12-30"), as.Date("2012-01-04"), by="days") %>% 
+  strftime(test, format = "%j")
+
+
 
