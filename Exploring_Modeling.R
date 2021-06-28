@@ -124,30 +124,45 @@ save(var.burn,file="TestModel")
 # lines(xseq, ci[2, ], col = "black")
 # points(as.numeric(df.model.vectors$x), as.numeric(df.model.vectors$y), pch = 20)
 
-# xseq <- seq(df.model.vectors$x[1], df.model.vectors$x[length(df.model.vectors$x)], length.out = 10000)
-# #xseq <- seq(0, 24, length.out = 10000)
-# 
-# out.mat <- as.data.frame(as.matrix(var.burn))
-# samplesize = 10000
-# a <- sample(out.mat$a, samplesize, replace = T)
-# c <- sample(out.mat$c, samplesize, replace = T)
-# k <- sample(out.mat$k, samplesize, replace = T)
-# 
-# leftvalues = a *(1-exp(-1 * (xseq - k))) + c
-# 
-# rightvalues = a *(1-exp((xseq - k))) + c
-# 
-# leftmean = leftvalues[xseq <= k]
-# 
-# rightmean = rightvalues[xseq > k]
-# 
-# test = c(leftmean,rightmean)
+
+#xseq <- seq(0, 24, length.out = 10000)
+
+out.mat <- as.data.frame(as.matrix(var.burn))
+samplesize = 10000
+
+
+xseq <- seq(df.model.vectors$x[1], df.model.vectors$x[length(df.model.vectors$x)], length.out = 10000)  
+
+df.sample <- sample_n(out.mat, samplesize, replace = T)
+
+a <-  df.sample$a
+c <-  df.sample$c
+k <-  df.sample$k
+
+leftvalues = a *(1-exp(-1 * (xseq - k))) + c
+
+rightvalues = a *(1-exp((xseq - k))) + c
+
+leftmean = leftvalues[xseq <= k]
+
+rightmean = rightvalues[xseq > k]
+
+test = c(leftmean,rightmean)
+
+ci <- quantile(test, probs = c(0.025, 0.5, 0.975), na.rm = TRUE)
+
 # 
 # length(test)
 # 
-# plot(xseq, test)
+plot(xseq, test)
+plot(xseq[xseq <= k], leftmean)
+plot(xseq[xseq > k], rightmean)
 # lines(df.model.vectors$x,df.model.vectors$y, col = "blue")
 
+
+## Using CI model 
+
+#plotCI(siteName=siteName,year=year,day=day,savePath=savePath)
 
 
 
