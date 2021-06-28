@@ -9,7 +9,7 @@ Latiude = c(32.457,  47.514,  45.806,  45.560,  44.065) #Can be a vector, in deg
 Longitude = c(-91.9743, -93.469, -90.079, -84.714, -71.288) #Can be a vector, in degrees
 # Russel Sage, Marcell, Willow Creek, UMBS, Bartlett
 
-Dates <- seq(as.Date("2020-01-01"), as.Date("2020-01-03"), by="days")
+Dates <- seq(as.Date("2020-01-01"), as.Date("2020-01-07"), by="days")
 
 
 
