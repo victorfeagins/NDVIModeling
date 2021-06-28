@@ -1,6 +1,8 @@
 library(lubridate)
 library(stringr)
 
+
+
 Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/GOES_Data_2020/"
 
 files<- list.files(Datadirectory)
@@ -10,26 +12,20 @@ files %>%
   nchar() %>% 
   summary()
 
-
 Channel2files <-  str_subset(files, "L1b-RadC-M[\\d]C02_G16")
 
 Channel2time_day <- Channel2files %>% 
-  str_extract("_s.+")
+  str_extract("_s.+") %>% 
+  str_sub(7,9)
+
+Channel2time_day %>% 
+  as.factor() %>% 
+  summary()
 
 head(Channel2files)
 head(Channel2time_day)
 
+#Date to 365 Day ----
+(test = as.Date("2020-02-01") %>% 
+  strftime(test, format = "%j"))
 
-
-
-
-
-Channel3files <- str_subset(files, "L1b-RadC-M[\\d]C03_G16")
-head(Channel3files)
-
-CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC")
-head(CloudMask)
-
-
-
-  
