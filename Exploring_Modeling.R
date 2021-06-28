@@ -4,6 +4,7 @@ library(magrittr)
 library(ggplot2)
 library(lubridate) 
 library(scales)
+library(coda)
 
 
 #Package from Github
@@ -59,6 +60,8 @@ df.avg.model <- df.avg %>%
   NDVICreate() %>% 
   NDVIQuality()
 
+
+
 GOES_NDVI_Data <- GOES_NDVI_Data %>% 
   t()
 colnames(GOES_NDVI_Data) <- c("NDVI", "Time")
@@ -108,4 +111,45 @@ ptm <- proc.time()
 var.burn <- runMCMC_Model(j.model=j.model,variableNames=c("a","c","k","prec"),
                           baseNum=20000,iterSize =10000)
 
-(Time<- proc.time() - ptm)
+(Time<- proc.time() - ptm) #2597.945 seconds
+save(var.burn,file="TestModel")
+
+
+
+# plot(x = list(), y = list(), main = "2017-08-21", ylim = c(0, 1), 
+#      xlim = c(10, 20), ylab = "NDVI", xlab = "Hour", cex = 2.5)
+# 
+# xseq <- seq(df.model.vectors$x[1], df.model.vectors$x[length(df.model.vectors$x)], 0.001)
+# ecoforecastR::ciEnvelope(xseq, ci[1, ], ci[3, ], col = "lightBlue")
+# lines(xseq, ci[2, ], col = "black")
+# points(as.numeric(df.model.vectors$x), as.numeric(df.model.vectors$y), pch = 20)
+
+# xseq <- seq(df.model.vectors$x[1], df.model.vectors$x[length(df.model.vectors$x)], length.out = 10000)
+# #xseq <- seq(0, 24, length.out = 10000)
+# 
+# out.mat <- as.data.frame(as.matrix(var.burn))
+# samplesize = 10000
+# a <- sample(out.mat$a, samplesize, replace = T)
+# c <- sample(out.mat$c, samplesize, replace = T)
+# k <- sample(out.mat$k, samplesize, replace = T)
+# 
+# leftvalues = a *(1-exp(-1 * (xseq - k))) + c
+# 
+# rightvalues = a *(1-exp((xseq - k))) + c
+# 
+# leftmean = leftvalues[xseq <= k]
+# 
+# rightmean = rightvalues[xseq > k]
+# 
+# test = c(leftmean,rightmean)
+# 
+# length(test)
+# 
+# plot(xseq, test)
+# lines(df.model.vectors$x,df.model.vectors$y, col = "blue")
+
+
+
+
+
+
