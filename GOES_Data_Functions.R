@@ -386,20 +386,29 @@ Open_Extract_Value <- function(file, lat, long, average = FALSE){
 
 
 
-Extract_Dataframe_P <- function(DataDirectory, lat, long, average = FALSE){
+Extract_Dataframe_P <- function(DataDirectory, lat, long, dates, average = FALSE){
   #Eventually put in Time day as variable to filter files day
   #Uses all the functions to create large dataframe containing info on all the 
   #Files in the datadirectory
   #Can be uses in parrallel using the future framework and furr
   #Outside of this function set a future::plan
   
-  files = list.files(path=DataDirectory, full.names = TRUE, recursive=FALSE)
+  days.request <- dates %>% #day of year from dates vector
+    strftime(test, format = "%Y%j")
   
-  Channel2files <- str_subset(files, "L1b-RadC-M[\\d]C02_G16")
+  files = list.files(path=DataDirectory, full.names = TRUE, recursive=FALSE) #all files in directory
+  files.days <- files %>%  #All the dayofyears of the files
+    str_extract("_s.+") %>% 
+    str_sub(3,9)
   
-  Channel3files <- str_subset(files, "L1b-RadC-M[\\d]C03_G16")
+  files.request <- files[files.days %in% days.request] #files that match day request
   
-  CloudMask <-  str_subset(files, "OR_ABI-L2-ACMC")
+  
+  Channel2files <- str_subset(files.request, "L1b-RadC-M[\\d]C02_G16")
+  
+  Channel3files <- str_subset(files.request, "L1b-RadC-M[\\d]C03_G16")
+  
+  CloudMask <-  str_subset(files.request, "OR_ABI-L2-ACMC")
   
   
   DataCh2<- future_map_dfr(Channel2files, Open_Extract_Value, lat = lat, long = long, average = average)
