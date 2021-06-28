@@ -4,19 +4,32 @@ library(stringr)
 
 
 Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/GOES_Data_2020/"
-
+DateDay = "2020-01-01" %>% 
+  as.Date() %>% 
+  strftime(test, format = "%j")
+  
 files<- list.files(Datadirectory)
 
-files %>% 
+
+
+days <- files %>% 
   str_extract("_s.+") %>% 
-  nchar() %>% 
+  str_sub(7,9)
+
+files[days == DateDay] %>% 
+  str_extract("_s.+") %>% 
+  str_sub(7,9) %>% 
+  as.factor() %>% 
   summary()
 
-Channel2files <-  str_subset(files, "L1b-RadC-M[\\d]C02_G16")
+files.filtered <- files[days == DateDay]
+ 
+
+Channel2files <-  str_subset(files.filtered, "L1b-RadC-M[\\d]C02_G16")
 
 Channel2time_day <- Channel2files %>% 
   str_extract("_s.+") %>% 
-  str_sub(7,9)
+  
 
 Channel2time_day %>% 
   as.factor() %>% 
