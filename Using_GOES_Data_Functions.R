@@ -13,7 +13,7 @@ Dates <- seq(as.Date("2020-01-01"), as.Date("2020-01-07"), by="days")
 
 
 
-numcores = 4 #For sequential put 1
+numcores = 9 #For sequential put 1
 
 
 ptm <- proc.time()
@@ -22,6 +22,8 @@ plan(multisession, workers = numcores)
 df = Extract_Dataframe_P(Datadirectory, Latiude, Longitude, Dates, average = TRUE)
 
 (Time<- proc.time() - ptm)
+#9 cores for 5 sites, 7 days took 418 secs to run
+
 
 # file = "Data/OR_ABI-L1b-RadC-M3C02_G16_s20172330232189_e20172330234562_c20172330234599.nc"
 # Open_Extract_Value(file, Latiude, Longitude, TRUE)
@@ -40,7 +42,7 @@ df = Extract_Dataframe_P(Datadirectory, Latiude, Longitude, Dates, average = TRU
 #   data.frame()
 # nc_close(NC_file)
 
-write.csv(df, "TestDataAvg.csv")
+write.csv(df, "MultiSiteJan_01_07.csv")
 
 
 
