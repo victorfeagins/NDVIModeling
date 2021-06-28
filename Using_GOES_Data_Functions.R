@@ -2,18 +2,20 @@ source("GOES_Data_Functions.R")
 
 
 #Input ----
-Datadirectory = "Data"
-Latiude = 32.457 #Can be a vector, in degrees 
-Longitude = -91.9743 #Can be a vector, in degrees
+Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/GOES_Data_2020/"
+Latiude = c(32.457,  47.514,  45.806,  45.560,  44.065) #Can be a vector, in degrees 
+Longitude = c(-91.9743, -93.469, -90.079, -84.714, -71.288) #Can be a vector, in degrees
+# Russel Sage, Marcell, Willow Creek, UMBS, Bartlett
+
 numcores = 4 #For sequential put 1
 
 
-
+ptm <- proc.time()
 plan(multisession, workers = numcores)
 
 df = Extract_Dataframe_P(Datadirectory, Latiude, Longitude, average = TRUE)
 
-
+(Time<- proc.time() - ptm)
 
 # file = "Data/OR_ABI-L1b-RadC-M3C02_G16_s20172330232189_e20172330234562_c20172330234599.nc"
 # Open_Extract_Value(file, Latiude, Longitude, TRUE)
@@ -33,4 +35,6 @@ df = Extract_Dataframe_P(Datadirectory, Latiude, Longitude, average = TRUE)
 # nc_close(NC_file)
 
 write.csv(df, "TestDataAvg.csv")
+
+
 
