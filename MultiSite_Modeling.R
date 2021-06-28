@@ -61,14 +61,23 @@ df.model.vectors <- df.clean %>%
   mutate(Time = hour(Time) + minute(Time)/60) %>% 
   rename(x = Time, y = NDVI) %>% 
   group_by(DaySiteID) %>% 
-  group_split()
+  group_split() %>% 
+  lapply(as.list)
 
+ 
+DiurnalModeling <- function(Data){
+  j.model = createDiurnalModel("Test", Data)
+  var.burn <- runMCMC_Model(j.model=j.model,variableNames=c("a","c","k","prec"),
+                            baseNum=20000,iterSize =10000)
+  attr(var.burn, "DaySiteID") <- Data$DaySiteID
+  
+  return(var.burn)
+}
 
-j.model = createDiurnalModel("Test", df.model.vectors)
+j.model = createDiurnalModel("Test", df.model.vectors[[2]])
 ptm <- proc.time()
-var.burn <- runMCMC_Model(j.model=j.model,variableNames=c("a","c","k","prec"),
-                          baseNum=20000,iterSize =10000)
 
+DiurnalModeling(df.model.vectors[[2]])
 (Time<- proc.time() - ptm) #2597.945 seconds
 
 
