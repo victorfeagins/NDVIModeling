@@ -120,15 +120,6 @@ df.model.vectors <- df.clean %>%
 
 
 
-# library(parallel)
-# 
-# 
-# ptm <- proc.time()
-# 
-# modeloutput = mclapply(df.model.vectors, DiurnalModeling, mc.cores = 9)
-# (Time<- proc.time() - ptm) #2597.945 seconds
-
-
 test <- df.model.vectors[1:numCores] #I don't want to wait 2 hours or more so just testing
 
 plan(multisession, workers = numCores)
