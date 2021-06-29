@@ -61,6 +61,7 @@ df.model.vectors <- df.clean %>%
   mutate(Time = hour(Time) + minute(Time)/60) %>% 
   rename(x = Time, y = NDVI) %>% 
   group_by(DaySiteID) %>% 
+  filter(n() >= 50)%>% 
   group_split() %>% 
   lapply(as.list)
 
@@ -74,10 +75,12 @@ DiurnalModeling <- function(Data){
   return(var.burn)
 }
 
-j.model = createDiurnalModel("Test", df.model.vectors[[2]])
+library(parallel)
+
+
 ptm <- proc.time()
 
-DiurnalModeling(df.model.vectors[[2]])
+modeloutput = mclapply(df.model.vectors, DiurnalModeling, mc.cores = 9)
 (Time<- proc.time() - ptm) #2597.945 seconds
 
 
