@@ -12,8 +12,8 @@ library(lubridate)# Uses to create intervals
 library(scales) #Used to create nice axis
 library(GOESDiurnalNDVI) #Used for running NDVI modeling and calculating NDVI
 
-library(future)
-library(future.apply)
+library(future) #Parallel process
+library(future.apply) #future lapply
 
 
 #Functions ----
@@ -52,7 +52,7 @@ NDVIQuality <- function(dataframewithNDVI){
     filter(Time %within% Daytime) %>%  #Only observations that are in daytime
     filter(across(ends_with("DQF"), ~ . == 0)) %>% #All Data Quality Flags are equal to zero
     filter(BCM == 0) %>%  #cloud mask is zero
-    filter(NDVI > 0 & round(NDVI,digits=4) != 0.6040) #NDVI positive or noisy number
+    filter(NDVI > 0 & round(NDVI,digits=4) != 0.6040 & NDVI < 1) #NDVI positive or noisy number
   
   return(output)
 }
@@ -61,7 +61,7 @@ DiurnalModeling <- function(Data){
   j.model = createDiurnalModel("Test", Data)
   var.burn <- runMCMC_Model(j.model=j.model,variableNames=c("a","c","k","prec"),
                             baseNum=20000,iterSize =10000)
-  attr(var.burn, "DaySiteID") <- Data$DaySiteID
+  attr(var.burn, "DaySiteID") <- unique(Data$DaySiteID) #Going to need to find a more informative id
   
   return(var.burn)
 }
@@ -76,6 +76,30 @@ df.clean <- df %>%
   GroupIDs() %>% 
   NDVICreate() %>% 
   NDVIQuality() #Quality needs group variables for applying Daytime
+
+
+
+#Exploring Data ----
+df.clean %>% 
+  select(Time, NDVI, DaySiteID) %>% 
+  reshape2::melt(c("Time", "DaySiteID"))  %>%
+  mutate(Time = as.POSIXct(Time)) %>% 
+  ggplot(mapping = aes(x = Time , y = value)) +
+  geom_point() +
+  facet_wrap(~DaySiteID, scales = "free")+
+  labs(title = "NDVI", x = "Time") +
+  scale_x_datetime(labels = date_format("%H:%M:%S"))
+
+df.clean %>% 
+  select(Time, NDVI, DaySiteID) %>% 
+  mutate(Time = hour(Time) + minute(Time)/60) %>% #Eventually might need to convert to local time zone
+  group_by(DaySiteID) %>% 
+  filter(n() >= 25) %>% 
+  reshape2::melt(c("Time", "DaySiteID"))  %>%
+  ggplot(mapping = aes(x = Time , y = value)) +
+  geom_point() +
+  facet_wrap(~DaySiteID, scales = "free")+
+  labs(title = "NDVI by DaySiteID", x = "Time")
 
 
 # Preparing data for modeling ----
@@ -107,7 +131,7 @@ test <- df.model.vectors[1:numCores] #I don't want to wait 2 hours or more so ju
 
 plan(multisession, workers = numCores)
 ptm <- proc.time()
-future_lapply(test, DiurnalModeling)
+modeloutput<- future_lapply(test, DiurnalModeling)
 
 
 (Time<- proc.time() - ptm) #2597.945 seconds
