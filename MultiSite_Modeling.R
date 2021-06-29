@@ -74,7 +74,7 @@ df <- read.csv(csvfile)
 # Cleaning data ----
 df.clean <- df %>% 
   GroupIDs() %>% 
-  NDVICreate() %>% 
+  NDVICreate() %>% #Creation of NDVI variables
   NDVIQuality() #Quality needs group variables for applying Daytime
 
 
@@ -90,6 +90,8 @@ df.clean %>%
   labs(title = "NDVI", x = "Time") +
   scale_x_datetime(labels = date_format("%H:%M:%S"))
 
+
+## Data that will end up in the model ----
 df.clean %>% 
   select(Time, NDVI, DaySiteID) %>% 
   mutate(Time = hour(Time) + minute(Time)/60) %>% #Eventually might need to convert to local time zone
