@@ -61,6 +61,9 @@ DiurnalModeling <- function(Data){
   j.model = createDiurnalModel("Test", Data)
   var.burn <- runMCMC_Model(j.model=j.model,variableNames=c("a","c","k","prec"),
                             baseNum=20000,iterSize =10000)
+  out.mat <- as.matrix(var.burn)
+  thinAmount <- round(nrow(out.mat)/5000,digits=0)
+  var.burn <- window(var.burn,thin=thinAmount)
   attr(var.burn, "DaySiteID") <- unique(Data$DaySiteID) #Going to need to find a more informative id
   
   return(var.burn)
@@ -108,7 +111,7 @@ df.clean %>%
 df.model.vectors <- df.clean %>% 
   select(Time, NDVI, DaySiteID) %>% 
   mutate(Time = hour(Time) + minute(Time)/60) %>% #Eventually might need to convert to local time zone
-  rename(x = Time, y = NDVI) %>% 
+  rename(y = NDVI, x = Time) %>% 
   group_by(DaySiteID) %>% 
   filter(n() >= 25)%>% #Keep onlysite day that have more then 25 obs
   group_split() %>% #Splits groups up into a list
@@ -128,7 +131,12 @@ modeloutput<- future_lapply(test, DiurnalModeling)
 
 
 (Time<- proc.time() - ptm) #2597.945 seconds
-#save(modeloutput, file ="TestModel6sites_days")
 
+load("TestModel6sites_days")
+
+str(modeloutput[[1]])
+
+
+#save(modeloutput, file ="TestModel6sites_days")
 
 
