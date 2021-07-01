@@ -3,17 +3,14 @@ source("GOES_Data_Functions.R")
 
 #Input ----
 Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/GOES_Data_2020/"
-
+numcores = 9 
 
 Latiude = c(32.457,  47.514,  45.806,  45.560,  44.065) #Can be a vector, in degrees 
 Longitude = c(-91.9743, -93.469, -90.079, -84.714, -71.288) #Can be a vector, in degrees
 # Russel Sage, Marcell, Willow Creek, UMBS, Bartlett
 
-Dates <- seq(as.Date("2020-01-01"), as.Date("2020-01-07"), by="days")
+Dates <- seq(as.Date("2020-01-01"), as.Date("2020-01-07"), by="days") 
 
-
-
-numcores = 9 #For sequential put 1
 
 
 ptm <- proc.time()
@@ -22,6 +19,9 @@ plan(multisession, workers = numcores)
 df = Extract_Dataframe_P(Datadirectory, Latiude, Longitude, Dates, average = TRUE)
 
 (Time<- proc.time() - ptm)
+
+write.csv(df, "MultiSiteJan_01_07.csv")
+
 #9 cores for 5 sites, 7 days took 418 secs to run
 
 
@@ -42,7 +42,7 @@ df = Extract_Dataframe_P(Datadirectory, Latiude, Longitude, Dates, average = TRU
 #   data.frame()
 # nc_close(NC_file)
 
-write.csv(df, "MultiSiteJan_01_07.csv")
+
 
 
 
