@@ -13,8 +13,9 @@ Longitude = SiteCodedf$Longitude
 Dates <- seq(Today - Daysback, Today-1, by="days") 
 
 ptm <- proc.time()
-plan(multisession, workers = numcores)
+#plan(multisession, workers = numcores)
 
+plan(sequential)
 df = Extract_Dataframe_P(Datadirectory, Latitude, Longitude, Dates, average = TRUE)
 
 (Time<- proc.time() - ptm)
