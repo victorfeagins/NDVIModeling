@@ -53,7 +53,7 @@ NDVIQuality <- function(dataframewithNDVI){
     distinct() %>% #Only need one row per group
     rename(date = Date, lat = Latitude, lon = Longitude) %>% #Renaming columns for getSunlightTimes
     mutate(getSunlightTimes(data = ., keep=c("nauticalDawn","nauticalDusk"), tz = "UTC")) %>% #Mutate adds nauticalDawn and Dusk to df
-    mutate(Daytime = interval(nauticalDawn, nauticalDusk)) %>% #Creating interval object
+    mutate(Daytime = interval(nauticalDawn + 1.5*60*60, nauticalDusk - 1.5*60*60)) %>% #Creating interval object with 1.5 hour trim
     select(DaySiteID, Daytime)# Only need DaySiteID and Daytime interval variables
   
   output <- dataframewithNDVI %>%
@@ -77,20 +77,19 @@ df.clean <- df %>%
   mutate(LocalTime = mapply(format, x = Time, tz = LocalTZ)) #Converting Time into local time zone
 
 
-#Exploring LocalTime
-library(ggplot2)
-
-df.clean %>% 
-  select(LocalTime, NDVI, DaySiteID) %>% 
-  mutate(LocalTime = hour(LocalTime) + minute(LocalTime)/60) %>% #Eventually might need to convert to local time zone
-  group_by(DaySiteID) %>% 
-  filter(n() >= 25) %>% 
-  reshape2::melt(c("LocalTime", "DaySiteID"))  %>%
-  ggplot(mapping = aes(x = LocalTime , y = value)) +
-  geom_point() +
-  facet_wrap(~DaySiteID, scales = "free")+
-  labs(title = "NDVI by DaySiteID", x = "LocalTime (hour)")
-
+# #Exploring LocalTime
+# library(ggplot2)
+# 
+# df.clean %>% 
+#   select(LocalTime, NDVI, DaySiteID) %>% 
+#   mutate(LocalTime = hour(LocalTime) + minute(LocalTime)/60) %>% #Eventually might need to convert to local time zone
+#   group_by(DaySiteID) %>% 
+#   filter(n() >= 25) %>% 
+#   reshape2::melt(c("LocalTime", "DaySiteID"))  %>%
+#   ggplot(mapping = aes(x = LocalTime , y = value)) +
+#   geom_point() +
+#   facet_wrap(~DaySiteID, scales = "free")+
+#   labs(title = "NDVI by DaySiteID", x = "LocalTime (hour)")
 
 
 
