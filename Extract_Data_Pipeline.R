@@ -24,8 +24,6 @@ df = Extract_Dataframe_P(Datadirectory, Latitude, Longitude, Dates, average = TR
 (Time<- proc.time() - ptm)
 
 
-df.siteinfo <- df %>% 
-  left_join(SiteCodedf)
 
 #Cleaning Data ----
 library(suncalc) #Used to find suntimes
@@ -38,6 +36,54 @@ GroupIDs <-  function(dataframe){
   return(output)
 }
 
-test <- df.siteinfo %>% 
-  GroupIDs()
+NDVICreate <- function(dataframe){
+  
+  output <- dataframe %>% 
+    mutate(R2 = RadC02 * KappaC02,
+           R3 = RadC03 * KappaC03,
+           NDVI = (R3-R2)/(R3+R2),#Function from GOES package
+           Time =  as_datetime(Time))
+  return(output)
+}
+NDVIQuality <- function(dataframewithNDVI){
+  
+  IntervalCode <- dataframewithNDVI %>% 
+    mutate(Date = as.Date(Time)) %>% #getSunlightTimes needs date
+    select(Date ,Longitude, Latitude, DaySiteID) %>% 
+    distinct() %>% #Only need one row per group
+    rename(date = Date, lat = Latitude, lon = Longitude) %>% #Renaming columns for getSunlightTimes
+    mutate(getSunlightTimes(data = ., keep=c("nauticalDawn","nauticalDusk"), tz = "UTC")) %>% #Mutate adds nauticalDawn and Dusk to df
+    mutate(Daytime = interval(nauticalDawn, nauticalDusk)) %>% #Creating interval object
+    select(DaySiteID, Daytime)# Only need DaySiteID and Daytime interval variables
+  
+  output <- dataframewithNDVI %>%
+    full_join(IntervalCode) %>% #Adds DayTime Interval to every row in dataset
+    filter(Time %within% Daytime) %>%  #Only observations that are in daytime
+    filter(across(ends_with("DQF"), ~ . == 0)) %>% #All Data Quality Flags are equal to zero
+    filter(BCM == 0) %>%  #cloud mask is zero
+    filter(NDVI > 0 & round(NDVI,digits=4) != 0.6040 & NDVI < 1) #NDVI positive or noisy number
+  
+  return(output)
+}
+
+
+
+df.clean <- df %>%
+  left_join(SiteCodedf) %>% 
+  GroupIDs() %>% 
+  NDVICreate() %>% #Creation of NDVI variables
+  NDVIQuality() %>%  #Quality needs group variables for applying Daytime
+  mutate(LocalTZ = lutz::tz_lookup_coords(Latitude, Longitude, warn = FALSE)) %>% #Creating localtimezone variable
+  mutate(LocalTime = mapply(format, x = Time, tz = LocalTZ)) #Converting Time into local time zone
+
+
+df.model.vectors <- df.clean %>% 
+  select(Time, NDVI, DaySiteID) %>% 
+  mutate(Time = hour(Time) + minute(Time)/60) %>% #Eventually might need to convert to local time zone
+  rename(y = NDVI, x = Time) %>% 
+  group_by(DaySiteID) %>% 
+  filter(n() >= 25)%>% #Keep onlysite day that have more then 25 obs
+  group_split() %>% #Splits groups up into a list
+  lapply(as.list) #Diurnal modeling wants lists
+
 
