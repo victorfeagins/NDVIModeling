@@ -1,10 +1,15 @@
 source("GOES_Data_Functions.R")
+
+#Input ----
 Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/GOES_Data_2021/"
 numcores = 9 
 SiteCodeBook = "SiteCodeBook.csv"
 Today = Sys.Date()
 Daysback = 1
 
+
+#Output ----
+outputdirectory = "/projectnb/dietzelab/GOES_DataFTP/InputFilesNDVIModel/2020/"
 
 
 #Extracting Data from files ----
@@ -66,7 +71,7 @@ NDVIQuality <- function(dataframewithNDVI){
   return(output)
 }
 
-
+#Cleaning Data----
 df.clean <- df %>%
   left_join(SiteCodedf) %>% 
   GroupIDs() %>% #Creation of DaySiteID
@@ -90,7 +95,7 @@ df.clean <- df %>%
 #   facet_wrap(~DaySiteID, scales = "free")+
 #   labs(title = "NDVI by DaySiteID", x = "LocalTime (hour)")
 
-
+#Creating Model Vectors ----
 df.model.vectors <- df.clean %>% 
   select(LocalTime, NDVI, DaySiteID) %>% 
   mutate(LocalTime = hour(LocalTime) + minute(LocalTime)/60) %>% #
@@ -98,7 +103,21 @@ df.model.vectors <- df.clean %>%
   group_by(DaySiteID) %>% 
   filter(n() >= 25)%>% #Keep onlysite day that have more then 25 obs
   group_split() %>% #Splits groups up into a list
-  lapply(as.list) #Diurnal modeling wants lists
+  lapply(as.data.frame) #For saving inputfiles dataframes is easier
+
+
+
+#Saving Input Files to Model ----
+Outputfilename <- function(df.model.item){
+  str_c(unique(df.model.item$DaySiteID), "input", sep = "_")
+}
+
+
+OutputFileNames  <-  map_chr(df.model.vectors, Outputfilename) %>% 
+  file.path(outputdirectory,.)
+
+
+mapply(write.csv, df.model.vectors, file = OutputFileNames, row.names = FALSE)
 
 
 
