@@ -67,10 +67,9 @@ NDVIQuality <- function(dataframewithNDVI){
 }
 
 
-
 df.clean <- df %>%
   left_join(SiteCodedf) %>% 
-  GroupIDs() %>% 
+  GroupIDs() %>% #Creation of DaySiteID
   NDVICreate() %>% #Creation of NDVI variables
   NDVIQuality() %>%  #Quality needs group variables for applying Daytime interval
   mutate(LocalTZ = lutz::tz_lookup_coords(Latitude, Longitude, warn = FALSE)) %>% #Creating localtimezone variable
@@ -80,17 +79,16 @@ df.clean <- df %>%
 # #Exploring LocalTime
 # library(ggplot2)
 # 
-# df.clean %>% 
-#   select(LocalTime, NDVI, DaySiteID) %>% 
+# df.clean %>%
+#   select(LocalTime, NDVI, DaySiteID) %>%
 #   mutate(LocalTime = hour(LocalTime) + minute(LocalTime)/60) %>% #Eventually might need to convert to local time zone
-#   group_by(DaySiteID) %>% 
-#   filter(n() >= 25) %>% 
+#   group_by(DaySiteID) %>%
+#   filter(n() >= 25) %>%
 #   reshape2::melt(c("LocalTime", "DaySiteID"))  %>%
 #   ggplot(mapping = aes(x = LocalTime , y = value)) +
 #   geom_point() +
 #   facet_wrap(~DaySiteID, scales = "free")+
 #   labs(title = "NDVI by DaySiteID", x = "LocalTime (hour)")
-
 
 
 df.model.vectors <- df.clean %>% 
@@ -101,5 +99,8 @@ df.model.vectors <- df.clean %>%
   filter(n() >= 25)%>% #Keep onlysite day that have more then 25 obs
   group_split() %>% #Splits groups up into a list
   lapply(as.list) #Diurnal modeling wants lists
+
+
+
 
 
