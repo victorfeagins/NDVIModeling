@@ -1,5 +1,5 @@
 source("GOES_Data_Functions.R")
-Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/GOES_Data_2020/"
+Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/GOES_Data_2021/"
 numcores = 9 
 SiteCodeBook = "SiteCodeBook.csv"
 Today = Sys.Date()
@@ -12,8 +12,6 @@ Longitude = SiteCodedf$Longitude
 
 Dates <- seq(Today - Daysback, Today-1, by="days") 
 
-
-
 ptm <- proc.time()
 plan(multisession, workers = numcores)
 
@@ -22,3 +20,5 @@ df = Extract_Dataframe_P(Datadirectory, Latitude, Longitude, Dates, average = TR
 (Time<- proc.time() - ptm)
 
 
+df.siteinfo <- df %>% 
+  left_join(SiteCodedf)
