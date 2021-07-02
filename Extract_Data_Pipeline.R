@@ -1,15 +1,15 @@
-source("GOES_Data_Functions.R")
+source("/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/GOES_Data_Functions.R")
 
 #Input ----
 Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/GOES_Data_2021/"
-numcores = 9 
-SiteCodeBook = "SiteCodeBook.csv"
+numCores <- as.numeric(commandArgs(TRUE)[1])
+SiteCodeBook = "/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/SiteCodeBook.csv"
 Today = Sys.Date()
 Daysback = 1
 
 
-#Output ----
-outputdirectory = "/projectnb/dietzelab/GOES_DataFTP/InputFilesNDVIModel/2020/"
+#Output ---
+outputdirectory = "/projectnb/dietzelab/GOES_DataFTP/InputFilesNDVIModel/2021/"
 
 
 #Extracting Data from files ----
@@ -21,7 +21,7 @@ Longitude = SiteCodedf$Longitude
 Dates <- seq(Today - Daysback, Today-1, by="days") 
 
 ptm <- proc.time()
-plan(multisession, workers = numcores)
+plan(multisession, workers = numCores)
 
 
 df = Extract_Dataframe_P(Datadirectory, Latitude, Longitude, Dates, average = TRUE)
