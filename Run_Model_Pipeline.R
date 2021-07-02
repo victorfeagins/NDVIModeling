@@ -14,15 +14,24 @@ library(GOESDiurnalNDVI) #Used for running NDVI modeling and calculating NDVI
 library(stringr)
 
 DiurnalModeling <- function(Data){
-  j.model = createDiurnalModel("Test", Data)
-  var.burn <- runMCMC_Model(j.model=j.model,variableNames=c("a","c","k","prec"),
-                            baseNum=20000,iterSize =10000)
-  out.mat <- as.matrix(var.burn)
-  thinAmount <- round(nrow(out.mat)/5000,digits=0)
-  var.burn <- window(var.burn,thin=thinAmount)
-  attr(var.burn, "DaySiteID") <- unique(Data$DaySiteID) #Going to need to find a more informative id
+  ModelVectors = list(x = Data$x, y = Data$y)
+  tryCatch({
+    j.model = createDiurnalModel("Test", ModelVectors)
+    var.burn <- runMCMC_Model(j.model=j.model,variableNames=c("a","c","k","prec"),
+                              baseNum=20000,iterSize =10000)
+    out.mat <- as.matrix(var.burn)
+    thinAmount <- round(nrow(out.mat)/5000,digits=0)
+    var.burn <- window(var.burn,thin=thinAmount)
+    attr(var.burn, "DaySiteID") <- unique(Data$DaySiteID) #Going to need to find a more informative id
+    
+    return(var.burn) 
+  } ,   error=function(cond) {
+    # Choose a return value in case of error
+    msg<- paste(unique(Data$DaySiteID), cond)
+    return(msg)})
   
-  return(var.burn)
+  
+
 }
 
 #Reading in Data -----
@@ -48,10 +57,12 @@ model.list <- lapply(modelfiles, function(x){as.list(read.csv(x))})
 
 test <-  model.list[1:numCores]
 
-plan(multisession, workers = numCores)
+#plan(multisession, workers = numCores)
 ptm <- proc.time()
-modeloutput<- future_lapply(test, DiurnalModeling)
+#modeloutput<- future_lapply(test[1], DiurnalModeling)
 
+
+output <- DiurnalModeling(test[[4]])
 
 (Time<- proc.time() - ptm)
 
