@@ -3,6 +3,7 @@ source("/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/GOES_Data_Functi
 #Input ----
 Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/GOES_Data_2021/"
 numCores <- as.numeric(commandArgs(TRUE)[1])
+#numCores <- 4
 SiteCodeBook = "/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/GOESdownloadSites.csv"
 Today = Sys.Date()
 Daysback = 1
