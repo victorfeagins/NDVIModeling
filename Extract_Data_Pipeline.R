@@ -3,7 +3,7 @@ source("/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/GOES_Data_Functi
 #Input ----
 Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/GOES_Data_2021/"
 numCores <- as.numeric(commandArgs(TRUE)[1])
-SiteCodeBook = "/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/SiteCodeBook.csv"
+SiteCodeBook = "/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/GOESdownloadSites.csv"
 Today = Sys.Date()
 Daysback = 1
 
@@ -15,13 +15,15 @@ outputdirectory = "/projectnb/dietzelab/GOES_DataFTP/InputFilesNDVIModel/2021/"
 #Extracting Data from files ----
 SiteCodedf = read.csv(SiteCodeBook)
 
-Latitude = SiteCodedf$Latitude
-Longitude = SiteCodedf$Longitude
+Latitude = SiteCodedf$Lat
+Longitude = SiteCodedf$Long
 
 Dates <- seq(Today - Daysback, Today-1, by="days") 
 
 ptm <- proc.time()
 plan(multisession, workers = numCores)
+#plan(sequential)
+
 
 
 df = Extract_Dataframe_P(Datadirectory, Latitude, Longitude, Dates, average = TRUE)
@@ -37,7 +39,7 @@ library(lubridate)# Uses to create intervals
 GroupIDs <-  function(dataframe){
   #Creates ID Variables for day of year and position
   output <- dataframe %>% 
-    mutate(DaySiteID =  str_c(SiteName, year(Time),yday(Time), sep = "_")) #Unique Identifier based on day and site
+    mutate(DaySiteID =  str_c(siteName, year(Time),yday(Time), sep = "_")) #Unique Identifier based on day and site
   return(output)
 }
 
@@ -73,7 +75,7 @@ NDVIQuality <- function(dataframewithNDVI){
 
 #Cleaning Data----
 df.clean <- df %>%
-  left_join(SiteCodedf) %>% 
+  left_join(SiteCodedf, by = c("Latitude" = "Lat", "Longitude" = "Long")) %>% 
   GroupIDs() %>% #Creation of DaySiteID
   NDVICreate() %>% #Creation of NDVI variables
   NDVIQuality() %>%  #Quality needs group variables for applying Daytime interval
