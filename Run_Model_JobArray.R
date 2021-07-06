@@ -34,7 +34,7 @@ inputfiles = list.files(inputdirectory) %>%
   str_subset(str_c(year(Dates),yday(Dates), sep = "_"))
 
 
-file = inputfiles[1]
+file = inputfiles[fileindex]
 
 Data = file.path(inputdirectory, file) %>% 
   read.csv() %>% 
@@ -48,4 +48,16 @@ ptm <- proc.time()
 OutPutModel <- DiurnalModeling(Data)
 
 print(proc.time() - ptm)
+
+#Saving MCMC List ----
+
+
+outputfilename = file %>% 
+  str_replace("_input", "_output")
+
+#When saving with RDS R forgets the original name which is better in this case
+#Because later we can rename the object with a better name
+saveRDS(OutPutModel, file = outputfilename) 
+
+#test <- readRDS("asuhighlands_2021_186_output")
 
