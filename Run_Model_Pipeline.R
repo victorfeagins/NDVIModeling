@@ -1,3 +1,6 @@
+
+#This program runs run model in parallel but is not suited for for jobarray. Since some models take too long to run.
+
 #Input ----
 numCores = 9
 inputdirectory = "/projectnb/dietzelab/GOES_DataFTP/InputFilesNDVIModel/2020/"
