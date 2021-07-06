@@ -54,7 +54,8 @@ print(proc.time() - ptm)
 
 outputfilename = file %>% 
   str_replace("_input", "_output") %>%
-  file.path(outputdirectory, .)
+  file.path(outputdirectory, .) %>% 
+  str_c(".rds")
 
 #When saving with RDS R forgets the original name which is better in this case
 #Because later we can rename the object with a better name
