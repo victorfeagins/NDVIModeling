@@ -4,7 +4,7 @@ outputdirectory = "/projectnb/dietzelab/GOES_DataFTP/OutputFilesNDVIModel/2021/"
 
 
 fileindex = as.numeric(commandArgs(TRUE)[1]) #Comes from job array
-
+Daysback = 1
 
 #Packages ----
 library(lubridate)
@@ -26,7 +26,7 @@ DiurnalModeling <- function(Data){
 
 #Extracting single file ----
 Today = Sys.Date()
-Daysback = 1
+
 
 Dates <- seq(Today - Daysback, Today-1, by="days")
 
@@ -53,11 +53,12 @@ print(proc.time() - ptm)
 
 
 outputfilename = file %>% 
-  str_replace("_input", "_output")
+  str_replace("_input", "_output") %>%
+  file.path(outputdirectory, .)
 
 #When saving with RDS R forgets the original name which is better in this case
 #Because later we can rename the object with a better name
-saveRDS(OutPutModel, file = outputfilename) 
+saveRDS(OutPutModel, file = outputfilename)
 
 #test <- readRDS("asuhighlands_2021_186_output")
 
