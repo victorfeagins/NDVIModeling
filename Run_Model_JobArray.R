@@ -3,6 +3,8 @@ inputdirectory = "/projectnb/dietzelab/GOES_DataFTP/InputFilesNDVIModel/2021/"
 outputdirectory = "/projectnb/dietzelab/GOES_DataFTP/OutputFilesNDVIModel/2021/"
 
 
+aggregatedatadirectory = "/projectnb/dietzelab/GOES_DataFTP/SummaryModel/"
+
 fileindex = as.numeric(commandArgs(TRUE)[1]) #Comes from job array
 Daysback = 1
 
@@ -61,5 +63,56 @@ outputfilename = file %>%
 #Because later we can rename the object with a better name
 saveRDS(OutPutModel, file = outputfilename)
 
-#test <- readRDS("asuhighlands_2021_186_output")
+OutPutModel <- readRDS(file.path(outputdirectory,"asuhighlands_2021_186_output"))
 
+
+# Extacting Values from MCMC List ----
+
+Model.Values <- MCMCvis::MCMCchains(OutPutModel)
+
+ValueExtraction <-  function(modelvalues){
+  
+  Means <- apply(modelvalues, 2, mean) %>% 
+    setNames(nm = str_c(colnames(modelvalues), ".mean"))
+  
+  Sd <- apply(modelvalues, 2, sd) %>% 
+    setNames(nm = str_c(colnames(modelvalues), ".sd"))
+  return(c(Means,Sd))
+}
+
+
+
+c.quan <- quantile(c, probs = c(.025, .5, .975)) %>% 
+  setNames(nm = str_c("c.", names(.)))
+
+DaySiteID <-  attr(OutPutModel, "DaySiteID") %>%
+  setNames("DaySiteID")
+
+SiteName <- DaySiteID %>% 
+  str_remove("_[_\\d]+$") %>% 
+  setNames("Site")
+
+DateISO <-  DaySiteID %>% 
+  str_extract("_[_\\d]+$") %>% 
+  as.Date(format = "_%Y_%j") %>% 
+  setNames("Date")
+
+
+Summary <- c(DaySiteID, format_ISO8601(DateISO),SiteName, ValueExtraction(Model.Values), c.quan) %>% 
+  as.list() %>% 
+  as.data.frame()
+
+# Saving Extracted values ----
+
+CSVfilename = DaySiteID %>% 
+  str_remove("_[_\\d]+$") %>% 
+  str_c(".csv") %>% 
+  file.path(aggregatedatadirectory,.)
+
+write.table(Summary, file = CSVfilename, 
+            sep = ",", 
+            col.names = !file.exists(CSVfilename), 
+            append = T,
+            row.names = FALSE)
+
+test <- read.csv(CSVfilename)
