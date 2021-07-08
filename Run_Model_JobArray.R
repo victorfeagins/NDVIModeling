@@ -115,4 +115,3 @@ write.table(Summary, file = CSVfilename,
             append = T,
             row.names = FALSE)
 
-test <- read.csv(CSVfilename)
