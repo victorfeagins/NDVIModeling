@@ -15,12 +15,8 @@ inputfiles <- list.files(inputdirectory)
 Date <- as.Date("2020/01/09")
 
 inputfiles %>% 
-  str_subset(format(Date, "NEON.D11.CLBJ.DP1.00033_%Y_%j"))
+  str_subset(format(Date, "NEON.D11.CLBJ.DP1.00033_%Y_9_"))
 
 inputfiles %>% 
   str_subset("NEON.D11.CLBJ.DP1.00033")
-
-%>% #Picking the file from date and site
-  file.path(inputdirectory, .) %>% 
-  read.csv()
 
