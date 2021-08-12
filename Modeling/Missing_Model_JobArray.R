@@ -6,7 +6,9 @@ outputdirectory = "/projectnb/dietzelab/GOES_DataFTP/OutputFilesNDVIModel/2021/"
 aggregatedatadirectory = "/projectnb/dietzelab/GOES_DataFTP/SummaryModel/"
 
 fileindex = as.numeric(commandArgs(TRUE)[1]) #Comes from job array
-Daysback = 1
+files = readRDS("/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/MissingModelRequest.rds") #Comes from previous files
+
+
 
 #Packages ----
 library(lubridate)
@@ -27,16 +29,12 @@ DiurnalModeling <- function(Data){
 }
 
 #Extracting single file ----
-Today = Sys.Date()
 
+# files <- files %>% 
+#   str_split('~') %>% #Splits arguments based on ~
+#   unlist()
 
-Dates <- seq(Today - Daysback, Today-1, by="days")
-
-inputfiles = list.files(inputdirectory) %>% 
-  str_subset(str_c(year(Dates),yday(Dates), sep = "_"))
-
-
-file = inputfiles[fileindex]
+file = files[fileindex] #Grabbing single file
 
 Data = file.path(inputdirectory, file) %>% 
   read.csv() %>% 
@@ -63,7 +61,7 @@ outputfilename = file %>%
 #Because later we can rename the object with a better name
 saveRDS(OutPutModel, file = outputfilename)
 
-OutPutModel <- readRDS(file.path(outputdirectory,"asuhighlands_2021_186_output"))
+#OutPutModel <- readRDS(file.path(outputdirectory,"asuhighlands_2021_186_output"))
 
 
 # Extacting Values from MCMC List ----
@@ -82,7 +80,7 @@ ValueExtraction <-  function(modelvalues){
 
 
 
-c.quan <- quantile(c, probs = c(.025, .5, .975)) %>% 
+c.quan <- quantile(Model.Values[,"c"], probs = c(.025, .5, .975)) %>% 
   setNames(nm = str_c("c.", names(.)))
 
 DaySiteID <-  attr(OutPutModel, "DaySiteID") %>%
@@ -115,3 +113,4 @@ write.table(Summary, file = CSVfilename,
             append = T,
             row.names = FALSE)
 
+#test <- read.csv(CSVfilename)

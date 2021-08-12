@@ -1,12 +1,13 @@
-source("/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/GOES_Data_Functions.R")
+source("/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/RawDataProcessing/GOES_Data_Functions.R")
 
 #Input ----
-Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/GOES_Data_2021/"
-numCores <- as.numeric(commandArgs(TRUE)[1])
-#numCores <- 4
+Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/GOES_Data_2020/"
+numCores <- 19
 SiteCodeBook = "/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/GOESdownloadSites.csv"
-Today = Sys.Date()
-Daysback = 1
+aggregatedatadirectory = "/projectnb/dietzelab/GOES_DataFTP/SummaryModel/"
+
+StartDate = as.Date("2020-1-1")
+EndDate = as.Date("2020-12-31")
 
 
 #Output ---
@@ -19,7 +20,7 @@ SiteCodedf = read.csv(SiteCodeBook)
 Latitude = SiteCodedf$Lat
 Longitude = SiteCodedf$Long
 
-Dates <- seq(Today - Daysback, Today-1, by="days") 
+Dates <- seq(StartDate, EndDate, by="days") 
 
 ptm <- proc.time()
 plan(multisession, workers = numCores)
@@ -98,6 +99,10 @@ df.clean <- df %>%
 #   facet_wrap(~DaySiteID, scales = "free")+
 #   labs(title = "NDVI by DaySiteID", x = "LocalTime (hour)")
 
+
+
+
+
 #Creating Model Vectors ----
 df.model.vectors <- df.clean %>% 
   select(LocalTime, NDVI, DaySiteID) %>% 
@@ -124,5 +129,43 @@ mapply(write.csv, df.model.vectors, file = OutputFileNames, row.names = FALSE)
 
 
 
+#Grabbing sites that have insufficient sample size ----
 
+df.nosample <- df.clean %>% 
+  mutate(Date = as.Date(LocalTime)) %>%
+  mutate(Site = str_remove(DaySiteID, "_[_\\d]+$")) %>% 
+  group_by(DaySiteID) %>% 
+  filter(n() < 25) %>%
+  select(DaySiteID, Date, Site) %>% 
+  mutate(a.mean = NA, #Order of this mutate matters since when writing to csv it has to match the index of the old columns.
+         c.mean = NA,
+         k.mean = NA,
+         prec.mean = NA,
+         a.sd = NA,
+         c.sd = NA,
+         k.sd = NA,
+         prec.sd = NA,
+         c.2.5. = NA,
+         c.50. = NA,
+         c.97.5. = NA,
+         QualityControl = "LS") %>% 
+  distinct() %>% 
+  group_split()
+
+#Writing nosample to csvs ----
+SaveNS <- function(csv, directory){
+  CSVfilename <- csv$Site %>% 
+    str_c(".csv") %>% 
+    file.path(directory,.)
+  
+  write.table(csv, file = CSVfilename, 
+              sep = ",", 
+              col.names = !file.exists(CSVfilename), 
+              append = T,
+              row.names = FALSE)
+  
+}
+
+
+lapply(df.nosample, SaveNS, directory = aggregatedatadirectory) #adds rows 
 
