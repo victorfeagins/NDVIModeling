@@ -87,6 +87,7 @@ ui <- fluidPage(
   h3("Site Summary Time Series"),
   h5("Click on a point to see more details"),
   plotlyOutput("summarytimeseries"),
+  textOutput("test"),
   h3(textOutput("action")),
   plotOutput("modelplot"),
   tableOutput("summarytable")
@@ -153,15 +154,17 @@ server <- function(input, output) {
  
 MCMCFile <- reactive({
   MCMCFile<- modelfiles %>% 
-    str_subset(as.character(plotly_event()["key"])) %>% #Picking the file from date and site
+    str_subset(str_c(as.character(plotly_event()["key"]),"_")) %>% #Picking the file from date and site
     file.path(modeldirectory, .) %>% 
     readRDS()
   
 })
-
+output$test <- renderText({
+  as.character(plotly_event()["key"])
+})
 RawData <- reactive({
   inputfiles %>% 
-  str_subset(as.character(plotly_event()["key"])) %>% #Picking the file from date and site
+  str_subset(str_c(as.character(plotly_event()["key"]),"_")) %>% #Picking the file from date and site
   file.path(inputdirectory, .) %>% 
   read.csv()
 })
