@@ -10,7 +10,7 @@
 library(shiny)
 library(stringr)
 library(dplyr)
-library(coda)
+library(coda)# Needed since as.matix behaves differently when this is loaded
 library(GOESDiurnalNDVI)
 library(leaflet)
 library(ggplot2)
@@ -53,7 +53,7 @@ diurnalplot <- function(MCMCFile, RawData, site, date){
 
 #Set up ----
 set.seed(123)
-numCores = 4 #has to be greater then 2 because workers have a size limit
+numCores = 4 #has to be greater then 2 because workers have a size limit also
 options(future.globals.maxSize= 891289600)
 plan(multisession, workers = numCores)
 
@@ -68,6 +68,8 @@ sitecodebook <- "/projectnb/dietzelab/vfeagins/Programming/NDVI_Modeling/GOESdow
 
 
 Sites <- read.csv(sitecodebook)
+# Sites <- Sites %>% 
+#   filter(siteName == "harvard" | siteName == "NEON.D01.HARV.DP1.00033")# These sites are very close together
 
 sitenames <- Sites$siteName
 
@@ -87,7 +89,6 @@ ui <- fluidPage(
   h3("Site Summary Time Series"),
   h5("Click on a point to see more details"),
   plotlyOutput("summarytimeseries"),
-  textOutput("test"),
   h3(textOutput("action")),
   plotOutput("modelplot"),
   tableOutput("summarytable")
@@ -100,8 +101,8 @@ server <- function(input, output) {
   #Select Map ----
   output$mymap <- renderLeaflet({
     leaflet(data = Sites) %>% 
-      addProviderTiles(providers$OpenStreetMap.Mapnik) %>%
-      addMarkers(~Long, ~Lat, label = ~siteName, layerId = ~siteName)
+      addProviderTiles(providers$OpenStreetMap.Mapnik) %>% #base map
+      addMarkers(~Long, ~Lat, label = ~siteName, layerId = ~siteName)# layer id is what can be accessed as id by click events
   })
   #Summary csv file ----
  summaryfile <- reactive({
@@ -170,7 +171,7 @@ RawData <- reactive({
 })
 
 output$modelplot <- renderPlot({
-  diurnalplot(MCMCFile(), RawData(), site = input$mymap_marker_click$id, date = plotly_event()["x"])
+  diurnalplot(MCMCFile(), RawData(), site = input$mymap_marker_click$id, date = plotly_event()["x"])#x is the date from the plotly
 })
 
 output$summarytable <- renderTable({
