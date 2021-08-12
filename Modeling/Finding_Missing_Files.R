@@ -19,7 +19,7 @@ DaySiteID.output <- outputfiles %>%
 
 ModelRequest <- inputfiles[!DaySiteID.input %in% DaySiteID.output] #Files that did not model
 
-saveRDS(ModelRequest, file = "/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/MissingModelRequest.rds")
+saveRDS(ModelRequest, file = "/projectnb/dietzelab/vfeagins/Programming/NDVI_Modeling/MissingModelRequest.rds")
 
 
 #files<- readRDS("/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/MissingModelRequest.rds")

@@ -6,4 +6,4 @@
 
 module load R/4.0.5
 
-Rscript /projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/Cron/Run_Model_JobArray.R $SGE_TASK_ID
+Rscript /projectnb/dietzelab/vfeagins/Programming/NDVI_Modeling/Cron/Run_Model_JobArray.R $SGE_TASK_ID

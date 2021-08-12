@@ -1,10 +1,10 @@
-source("/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/RawDataProcessing/GOES_Data_Functions.R")
+source("/projectnb/dietzelab/vfeagins/Programming/NDVI_Modeling/RawDataProcessing/GOES_Data_Functions.R")
 
 #Input ----
 Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/GOES_Data_2021/"
 numCores <- as.numeric(commandArgs(TRUE)[1])
 #numCores <- 4
-SiteCodeBook = "/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/GOESdownloadSites.csv"
+SiteCodeBook = "/projectnb/dietzelab/vfeagins/Programming/NDVI_Modeling/GOESdownloadSites.csv"
 aggregatedatadirectory = "/projectnb/dietzelab/GOES_DataFTP/SummaryModel/"
 
 Today = Sys.Date()

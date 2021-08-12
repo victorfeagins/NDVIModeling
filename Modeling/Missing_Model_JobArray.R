@@ -6,7 +6,7 @@ outputdirectory = "/projectnb/dietzelab/GOES_DataFTP/OutputFilesNDVIModel/2021/"
 aggregatedatadirectory = "/projectnb/dietzelab/GOES_DataFTP/SummaryModel/"
 
 fileindex = as.numeric(commandArgs(TRUE)[1]) #Comes from job array
-files = readRDS("/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/MissingModelRequest.rds") #Comes from previous files
+files = readRDS("/projectnb/dietzelab/vfeagins/Programming/NDVI_Modeling/MissingModelRequest.rds") #Comes from previous files
 
 
 

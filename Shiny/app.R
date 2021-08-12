@@ -62,7 +62,7 @@ plan(multisession, workers = numCores)
 summarydirectory <- "/projectnb/dietzelab/GOES_DataFTP/SummaryModel" #The summary files
 inputdirectory <- "/projectnb/dietzelab/GOES_DataFTP/InputFilesNDVIModel/2021/" #This is the raw data points
 modeldirectory <- "/projectnb/dietzelab/GOES_DataFTP/OutputFilesNDVIModel/2021/" #This is the mcmc output
-sitecodebook <- "/projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/GOESdownloadSites.csv" #This is the site codebook
+sitecodebook <- "/projectnb/dietzelab/vfeagins/Programming/NDVI_Modeling/GOESdownloadSites.csv" #This is the site codebook
 
 
 

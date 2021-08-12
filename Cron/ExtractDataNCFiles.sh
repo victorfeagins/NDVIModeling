@@ -8,4 +8,4 @@
 
 module load R/4.0.5
 
-Rscript /projectnb/dietzelab/vfeagins/Programming/NVDI_Modeling/Cron/Extract_Data_Pipeline.R $NSLOTS
+Rscript /projectnb/dietzelab/vfeagins/Programming/NDVI_Modeling/Cron/Extract_Data_Pipeline.R $NSLOTS
