@@ -1,0 +1,7 @@
+SHELL = /bin/bash
+HOME = /usr2/collab/vfeagins
+SGE_ROOT = /usr/local/sge/sge_root
+
+00 5 * * * bash /projectnb/dietzelab/vfeagins/Programming/NDVI_Modeling/Cron/ExtractDataNCFilesCron.sh
+00 3 * * * bash /usr2/collab/vfeagins/vfeagins/Programming/EmailReading/Cron/CronDownloadEmails.sh
+00 12 * * * bash /usr2/collab/vfeagins/vfeagins/Programming/NDVI_Modeling/Cron/NDVIModelArrayCron.sh
