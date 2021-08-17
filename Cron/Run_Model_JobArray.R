@@ -1,5 +1,5 @@
 #Inputs ----
-inputdirectory = "/projectnb/dietzelab/GOES_DataFTP/InputFilesNDVIModel/2021/"
+inputdirectory = "/projectnb/dietzelab/GOES_DataFTP/InputFilesNDVIModel/2021/" #Contains Inputcsvs model vectors
 outputdirectory = "/projectnb/dietzelab/GOES_DataFTP/OutputFilesNDVIModel/2021/"
 
 
@@ -37,7 +37,7 @@ inputfiles = list.files(inputdirectory) %>%
   str_subset(str_c(year(Dates),yday(Dates), sep = "_"))
 
 
-file = inputfiles[fileindex]
+file = inputfiles[fileindex] #extracts the single csv
 
 Data = file.path(inputdirectory, file) %>% 
   read.csv() %>% 

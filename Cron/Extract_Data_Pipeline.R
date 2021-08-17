@@ -1,18 +1,18 @@
 source("/projectnb/dietzelab/vfeagins/Programming/NDVI_Modeling/RawDataProcessing/GOES_Data_Functions.R")
 
 #Input ----
-Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/GOES_Data_2021/"
+Datadirectory = "/projectnb/dietzelab/GOES_DataFTP/GOES_Data_2021/" #Folder that contains the raw netcdf files
 numCores <- as.numeric(commandArgs(TRUE)[1])
 #numCores <- 4
-SiteCodeBook = "/projectnb/dietzelab/vfeagins/Programming/NDVI_Modeling/GOESdownloadSites.csv"
-aggregatedatadirectory = "/projectnb/dietzelab/GOES_DataFTP/SummaryModel/"
+SiteCodeBook = "/projectnb/dietzelab/vfeagins/Programming/NDVI_Modeling/Cron/GOESdownloadSites.csv" #File that is a csv of sites
+aggregatedatadirectory = "/projectnb/dietzelab/GOES_DataFTP/SummaryModel/" #Where the summary daily csv's are located
 
 Today = Sys.Date()
 Daysback = 1
 
 
 #Output ---
-outputdirectory = "/projectnb/dietzelab/GOES_DataFTP/InputFilesNDVIModel/2021/"
+outputdirectory = "/projectnb/dietzelab/GOES_DataFTP/InputFilesNDVIModel/2021/" #Where the MCMC files are located. Currently has 2021 and 2020 files
 
 
 #Extracting Data from files ----
