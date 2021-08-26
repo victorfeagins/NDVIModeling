@@ -64,6 +64,11 @@ Basically archived code of me learning things and testing things. Nothing too im
 #### Post Modeling
 Me doing some quick checks to see how the files ran nothing too important in there.
 
+## More Info 
+If you would like learn more about the model and applications that motivated this work check out some of my advisers papers on the topic 
+- A Statistical Model for Estimating Midday NDVI from the Geostationary Operational Environmental Satellite (GOES) 16 and 17: https://www.mdpi.com/2072-4292/11/21/2507
+- Improving the monitoring of deciduous broadleaf phenology using the Geostationary Operational Environmental Satellite (GOES) 16 and 17 https://bg.copernicus.org/articles/18/1971/2021/bg-18-1971-2021-discussion.html
+
 ## Acknowledgements 
 This work was funded, in part, by NSF grant DBI-1949968, awarded to the Boston University Bioinformatics BRITE REU program and The Near-term Ecological Forecasting Initiative NSF MSB Grant 1638577
 
