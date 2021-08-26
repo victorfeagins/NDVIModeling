@@ -72,4 +72,5 @@ If you would like learn more about the model and applications that motivated thi
 ## Acknowledgements 
 This work was funded, in part, by NSF grant DBI-1949968, awarded to the Boston University Bioinformatics BRITE REU program and The Near-term Ecological Forecasting Initiative NSF MSB Grant 1638577
 
+I am very thankful for my advisers Kathryn Wheeler and Michael Dietze for their mentoring during this project.
 
