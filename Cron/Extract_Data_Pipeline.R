@@ -12,7 +12,7 @@ Daysback = 1
 
 
 #Output ---
-outputdirectory = "/projectnb/dietzelab/GOES_DataFTP/InputFilesNDVIModel/2021/" #Where the MCMC files are located. Currently has 2021 and 2020 files
+outputdirectory = "/projectnb/dietzelab/GOES_DataFTP/InputFilesNDVIModel/2021/" #Where the csv daily files are located. Currently has 2021 and 2020 files
 
 
 #Extracting Data from files ----
