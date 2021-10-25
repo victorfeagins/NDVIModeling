@@ -78,7 +78,7 @@ prediction <- as.data.frame(cbind(xseq, ci)) %>%
 
 ggplot(inputdata) +
   ggthemes::theme_base() +
-  labs(title = "Appalachian State University Raw NDVI Time Series 2020/04/27",
+  labs(title = "ASU Modeled NDVI Time Series 2020/04/27",
        y = "NDVI",
        x = "Time (Hour)") +
   lims(x = c(min(inputdata$x),max(inputdata$x)),
