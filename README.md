@@ -1,7 +1,7 @@
 # Automating Modeling of Normalized Difference Vegetation Index (NDVI)
 
 ## What This repo is for
-This repo to for my advisers during the BRITE REU at Boston University to use and implement in their lab to automatically get daily estimates of NDVI values. Others may consult with and admire this repo if they would like to do something similar. 
+This repo to for my advisers during the BRITE REU at Boston University to use and implement in their lab to automatically get daily estimates of NDVI values. Others may consult with and admire this repo if they would like to do something similar. Here is my video presentation on the matter https://youtu.be/1w1KR4VfkIA 
 
 ## Essential Directions
 To retrieve the NDVI values all essential scripts are located in the **Cron** folder
