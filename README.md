@@ -18,7 +18,7 @@ The data products required are the following under GOES-R Series ABI Products GR
 All this netcdf files should be downloaded into one directory as that is how the scripts are set up to handle the data.
 Also don't rename the files as they contain important information about the time and data source.
 
-In another repo I have the code to acquire NOAA data automatically from CLASS subscription emails. Since that process requires setting up an email account, security preferences, authorization it is set to private so only my advisers can see it. If you are struggling with CLASS email subscriptions and would like to learn how I handled the problem, feel free to reach out victorfeagins@att.net
+In another repo I have the code to acquire NOAA data automatically from CLASS subscription emails. Since that process requires setting up an email account, security preferences, authorization it is set to private so only my advisers can see it. If you are struggling with CLASS email subscriptions and would like to learn how I handled the problem, feel free to reach out victorfeagins@outlook.com
 
 #### Site CodeBook
 The netcdf files are the entire CONUS area of the satellite. Usually we want to look at a single area. To filter the netcdf files by latiude and longtude we create a Site Codebook. Site Codebook has three variables
